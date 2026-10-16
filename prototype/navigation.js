@@ -1,5 +1,6 @@
 // Local obstacle steering, with a persistent turn side to avoid oscillating at trunks.
 export function steer(n,target,speed,dt,free,bounds=()=>true,radius=.38){
+  if(!target)return false;
   const p=n.g.position,dx=target.x-p.x,dz=target.z-p.z,d=Math.hypot(dx,dz);
   if(d<.18||dt<=0)return false;
   const aim=Math.atan2(dx,dz),step=Math.min(speed*dt,d),probe=Math.max(.8,step);

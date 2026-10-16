@@ -1,10 +1,13 @@
-import {mkdir,copyFile,readdir,writeFile} from 'node:fs/promises';
+import {mkdir,copyFile,readdir,writeFile,readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url)),source=path.join(root,'prototype'),dest=path.join(root,'dist');
 await mkdir(path.join(dest,'assets'),{recursive:true});await mkdir(path.join(dest,'vendor'),{recursive:true});
 const files=['index.html','game.js','chapter.js','models.js','assets.js','mechanics.js','progress.js','inventory.js','player-stats.js','ecology.js','deep-forest.js','lake-encounter.js','actor-state.js','save-game.js','persistence.js','equipment.js','navigation.js','storage.js','boss-combat.js'];
-for(const file of files)await copyFile(path.join(source,file),path.join(dest,file));
+const contents=await Promise.all(files.map(file=>readFile(path.join(source,file),'utf8')));
+const version=createHash('sha256').update(contents.join('\n')).digest('hex').slice(0,12);
+for(let i=0;i<files.length;i++)await writeFile(path.join(dest,files[i]),contents[i].replace(/(['"])(\.\/[^'"\n]+\.js)\1/g,(_,quote,url)=>quote+url+'?v='+version+quote));
 const unused=new Set(['волк.png','ворон.png','заяц.png','кузнец.png','стражник.png','могильщик.png','деревенская_женщина_три_ракурса.png']);
 for(const file of await readdir(path.join(source,'assets')))if(!unused.has(file))await copyFile(path.join(source,'assets',file),path.join(dest,'assets',file));
 for(const file of ['three.module.js','LICENSE'])await copyFile(path.join(source,'vendor',file),path.join(dest,'vendor',file));
