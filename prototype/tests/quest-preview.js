@@ -9,3 +9,5 @@ if(scenario==='level'){c.p.level=2;c.p.pendingLevels=1;camera.position.set(0,1.7
 if(scenario==='campfire'){world.travel(c.p);camera.position.set(240,1.7,-115);vitals.hp=30;vitals.mana=30}
 if(scenario==='hunter'||scenario==='hunter-talk'){c.p.classId='sword';c.slots[0]={id:'sword',count:1};c.p.rewards=['rabbit-quest','mary-water'];c.p.stage='hunter_travel';world.travel(c.p);camera.position.set(188,1.7,-181);if(scenario==='hunter-talk'){world.hunter.hp=0;c.p.stage='hunter_talk'}c.restore(c.snapshot())}
 if(scenario==='witch-offer'){c.p.classId='mage';c.slots[0]={id:'mage',count:1};c.p.stage='witch_offer';camera.position.set(1.5,1.7,-86);c.restore(c.snapshot())}
+if(scenario==='cursed'){c.p.classId='mage';c.slots[0]={id:'mage',count:1};c.p.rewards=['rabbit-quest','mary-water','hunter-quest'];c.p.stage='witch';world.travel(c.p);camera.position.set(280,1.7,-167);c.restore(c.snapshot())}
+if(scenario==='home'){c.p.rewards=['witch-quest'];c.p.stage='witch_done';camera.position.set(65,1.7,-95.6);addItem(c.slots,'mary_ale',3);c.restore(c.snapshot())}
