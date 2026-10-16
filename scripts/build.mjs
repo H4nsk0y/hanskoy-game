@@ -3,7 +3,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url)),source=path.join(root,'prototype'),dest=path.join(root,'dist');
 await mkdir(path.join(dest,'assets'),{recursive:true});await mkdir(path.join(dest,'vendor'),{recursive:true});
-const files=['index.html','game.js','chapter.js','models.js','assets.js','mechanics.js','progress.js','inventory.js','player-stats.js','ecology.js','deep-forest.js','lake-encounter.js','actor-state.js','save-game.js','persistence.js'];
+const files=['index.html','game.js','chapter.js','models.js','assets.js','mechanics.js','progress.js','inventory.js','player-stats.js','ecology.js','deep-forest.js','lake-encounter.js','actor-state.js','save-game.js','persistence.js','equipment.js'];
 for(const file of files)await copyFile(path.join(source,file),path.join(dest,file));
 const unused=new Set(['волк.png','ворон.png','заяц.png','кузнец.png','стражник.png','могильщик.png','деревенская_женщина_три_ракурса.png']);
 for(const file of await readdir(path.join(source,'assets')))if(!unused.has(file))await copyFile(path.join(source,'assets',file),path.join(dest,'assets',file));

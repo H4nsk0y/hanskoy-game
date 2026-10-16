@@ -7,3 +7,5 @@ if(scenario==='lake'){c.p.stage='water';addItem(c.slots,'jug_empty');camera.posi
 if(scenario==='reward'){c.p.stage='water_return';addItem(c.slots,'jug_water');camera.position.copy(residents[2].g.position);camera.position.z+=2;camera.position.y=1.7;vitals.hp=40;vitals.stamina=20;vitals.mana=20}
 if(scenario==='level'){c.p.level=2;c.p.pendingLevels=1;camera.position.set(0,1.7,-85)}
 if(scenario==='campfire'){world.travel(c.p);camera.position.set(240,1.7,-115);vitals.hp=30;vitals.mana=30}
+if(scenario==='hunter'||scenario==='hunter-talk'){c.p.classId='sword';c.slots[0]={id:'sword',count:1};c.p.rewards=['rabbit-quest','mary-water'];c.p.stage='hunter_travel';world.travel(c.p);camera.position.set(188,1.7,-181);if(scenario==='hunter-talk'){world.hunter.hp=0;c.p.stage='hunter_talk'}c.restore(c.snapshot())}
+if(scenario==='witch-offer'){c.p.classId='mage';c.slots[0]={id:'mage',count:1};c.p.stage='witch_offer';camera.position.set(1.5,1.7,-86);c.restore(c.snapshot())}

@@ -72,7 +72,7 @@ const deepFloor=mesh(new T.PlaneGeometry(150,180),mat(0x567473,{map:tex}),240,-.
 mesh(new T.CylinderGeometry(145,145,85,64,1,true),backMat,240,28,-120);
 mesh(new T.SphereGeometry(180,32,16),new T.MeshBasicMaterial({map:skyTex,color:0x7087b0,side:T.BackSide,fog:false,depthWrite:false}),240,0,-120);
 const clearings=[[211,-69],[265,-69],[191,-98],[236,-91],[285,-98],[207,-123],[259,-125],[191,-154],[236,-160],[274,-159]];
-for(let i=0;i<360;i++){const x=182+rand()*116,z=-42-rand()*154;if(Math.hypot(x-240,z+120)<6||Math.abs(x-240)<3&&z> -67||clearings.some(([cx,cz])=>Math.hypot(x-cx,z-cz)<5)||Math.hypot(x-292,z+184)<8)continue;tree(x,z,6+rand()*7,i%95===0)}
+for(let i=0;i<360;i++){const x=182+rand()*116,z=-42-rand()*154;if(Math.hypot(x-188,z+185)<7||Math.hypot(x-240,z+120)<6||Math.abs(x-240)<3&&z> -67||clearings.some(([cx,cz])=>Math.hypot(x-cx,z-cz)<5)||Math.hypot(x-292,z+184)<8)continue;tree(x,z,6+rand()*7,i%95===0)}
 for(let z=-42;z> -70;z-=2)box(240,-.015,z,3.5,.05,2.3,mat(0x647170,{map:tex}));
 // The remote hut exists now; its owner remains hidden until the future witch quest.
 house(292,-184,Math.PI*.8);
