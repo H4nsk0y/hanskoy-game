@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url)),source=path.join(root,'prototype'),dest=path.join(root,'dist');
 await mkdir(path.join(dest,'assets'),{recursive:true});await mkdir(path.join(dest,'vendor'),{recursive:true});
-const files=['index.html','game.js','chapter.js','models.js','assets.js','mechanics.js','progress.js','inventory.js','player-stats.js','ecology.js','deep-forest.js','lake-encounter.js','actor-state.js','save-game.js','persistence.js','equipment.js','navigation.js','storage.js','boss-combat.js','combat-rules.js','surface-textures.js'];
+const files=['index.html','game.js','chapter.js','models.js','assets.js','mechanics.js','progress.js','inventory.js','player-stats.js','ecology.js','deep-forest.js','lake-encounter.js','actor-state.js','save-game.js','persistence.js','equipment.js','navigation.js','storage.js','boss-combat.js','combat-rules.js','surface-textures.js','commerce.js','rounded-geometry.js','enemy-animation.js'];
 const contents=await Promise.all(files.map(file=>readFile(path.join(source,file),'utf8')));
 const version=createHash('sha256').update(contents.join('\n')).digest('hex').slice(0,12);
 for(let i=0;i<files.length;i++)await writeFile(path.join(dest,files[i]),contents[i].replace(/(['"])(\.\/[^'"\n]+\.js)\1/g,(_,quote,url)=>quote+url+'?v='+version+quote));

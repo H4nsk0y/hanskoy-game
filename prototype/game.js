@@ -1,3 +1,4 @@
+import {biteAttack} from './enemy-animation.js';
 import {surfaceTexture} from './surface-textures.js';
 import {statusStep} from './combat-rules.js';
 import {steer} from './navigation.js';
@@ -30,8 +31,8 @@ const groundTex=surfaceTexture('earth',45,55),pathTex=surfaceTexture('path',1,1)
 const floor=mesh(new T.PlaneGeometry(180,220),mat(0xb6bfae,{map:groundTex}),0,-.06,-60);floor.rotation.x=-Math.PI/2;
 function pathX(z){return Math.sin((z-8)*.065)*2.8}
 for(let z=14;z>-108;z-=2){const p=box(pathX(z),-.015,z,4.1,.05,2.3,mat(0xb5aa91,{map:pathTex}));p.rotation.y=Math.cos((z-8)*.065)*.18}
-const blockers=[],eyes=[];
-function tree(x,z,h,watch=false){const g=new T.Group();g.position.set(x,0,z);scene.add(g);const bend=(rand()-.5)*1.8;branch([0,0,0],[bend,h*.6,0],.65,.32,g);branch([bend,h*.6,0],[bend+.7,h,0],.32,.04,g);for(let i=0;i<5;i++){const s=i%2?1:-1,y=h*(.35+i*.1),out=s*(1.7+rand()*1.5);branch([bend*.6,y,0],[out,y+1,rand()-.5],.24,.1,g);branch([out,y+1,0],[out+s*.7,y+2.4,-.3],.1,.02,g)}for(let i=0;i<4;i++){let a=i*Math.PI/2;branch([0,.4,0],[Math.cos(a)*1.2,0,Math.sin(a)*1.2],.3,.05,g)}blockers.push({x,z,r:.8});if(watch){const face=new T.Group();face.position.set(bend*2.5/(h*.6),2.5,.39);const knot=mesh(new T.SphereGeometry(1,10,8),bark,face.position.x,2.5,.25,g);knot.scale.set(.64,.52,.40);g.add(face);for(const side of [-1,1]){
+const blockers=[],eyes=[],forestTrees=[];
+function tree(x,z,h,watch=false){const g=new T.Group();g.position.set(x,0,z);scene.add(g);const bend=(rand()-.5)*1.8;branch([0,0,0],[bend,h*.6,0],.65,.32,g);branch([bend,h*.6,0],[bend+.7,h,0],.32,.04,g);for(let i=0;i<5;i++){const s=i%2?1:-1,y=h*(.35+i*.1),out=s*(1.7+rand()*1.5);branch([bend*.6,y,0],[out,y+1,rand()-.5],.24,.1,g);branch([out,y+1,0],[out+s*.7,y+2.4,-.3],.1,.02,g)}for(let i=0;i<4;i++){let a=i*Math.PI/2;branch([0,.4,0],[Math.cos(a)*1.2,0,Math.sin(a)*1.2],.3,.05,g)}const collider={x,z,r:.8};blockers.push(collider);forestTrees.push({g,x,z,collider});if(watch){const face=new T.Group();face.position.set(bend*2.5/(h*.6),2.5,.39);const knot=mesh(new T.SphereGeometry(1,10,8),bark,face.position.x,2.5,.25,g);knot.scale.set(.64,.52,.40);g.add(face);for(const side of [-1,1]){
 const shape=new T.Shape();shape.moveTo(-.19,.065);shape.lineTo(.17,-.025);shape.quadraticCurveTo(.09,-.14,-.1,-.10);shape.closePath();
 const eye=mesh(new T.ShapeGeometry(shape),glow,side*.23,0,.26,face);eye.scale.x=-side;
 const pupil=mesh(new T.SphereGeometry(1,8,6),mat(0x00150c),side*.23,-.035,.28,face);pupil.scale.set(.017,.065,.018);
@@ -42,6 +43,7 @@ for(let i=0;i<75;i++){let z=8-rand()*110,x=pathX(z)+(rand()<.5?-1:1)*(3+rand()*1
 const waterCanvas=document.createElement('canvas');waterCanvas.width=waterCanvas.height=128;const wc=waterCanvas.getContext('2d');wc.fillStyle='#063338';wc.fillRect(0,0,128,128);for(let i=0;i<260;i++){wc.strokeStyle=`rgba(50,160,169,${rand()*.35})`;wc.beginPath();let x=rand()*128,y=rand()*128;wc.ellipse(x,y,3+rand()*12,.5,0,0,Math.PI*2);wc.stroke()}const waterTex=lakeMap;waterTex.wrapS=waterTex.wrapT=T.RepeatWrapping;waterTex.repeat.set(3,3);
 const water=mat(0x8bced1,{map:waterTex,metalness:.35,roughness:.25});
 const ponds=[{x:-15,z:-23,r:3},{x:16,z:-49,r:3.6},{x:-18,z:-69,r:4}];
+for(const t of forestTrees)if(ponds.some(p=>Math.hypot((t.x-p.x)/1.3,t.z-p.z)<p.r+1.2)){scene.remove(t.g);blockers.splice(blockers.indexOf(t.collider),1)}
 for(const p of ponds){const disk=mesh(new T.CircleGeometry(p.r,24),water,p.x,.015,p.z);disk.rotation.x=-Math.PI/2;disk.scale.x=1.3;}
 const wisps=[];for(let i=0;i<28;i++){const w=mesh(new T.SphereGeometry(.055,6,6),glow,(rand()-.5)*28,1+rand()*2,-rand()*105);wisps.push({w,y:w.position.y,p:rand()*7});}
 const warm=mat(0xffbc62,{emissive:0xff8a28,emissiveIntensity:2});const flames=[];
@@ -94,8 +96,9 @@ for(let i=0;i<3;i++){const log=mesh(new T.CylinderGeometry(.12,.15,1.6,7),wood,C
 const curseLight=new T.PointLight(0x42ff55,55,22,2);curseLight.position.copy(curseFire.position);scene.add(curseLight);flames.push(curseLight);
 const beaconCanvas=document.createElement('canvas');beaconCanvas.width=64;beaconCanvas.height=256;const beaconContext=beaconCanvas.getContext('2d'),beaconGradient=beaconContext.createLinearGradient(0,256,0,0);beaconGradient.addColorStop(0,'rgba(60,255,100,.55)');beaconGradient.addColorStop(.5,'rgba(40,220,100,.2)');beaconGradient.addColorStop(1,'rgba(40,220,100,0)');beaconContext.fillStyle=beaconGradient;beaconContext.fillRect(0,0,64,256);const beaconMaterial=new T.MeshBasicMaterial({map:new T.CanvasTexture(beaconCanvas),transparent:true,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending,fog:false});const beacon=mesh(new T.CylinderGeometry(4,1.2,38,24,1,true),beaconMaterial,292,22,-184);
 // A separate room is entered through the existing guard-house doorway.
-const roomFloor=box(65,-.06,-95,10,.1,10,timber);for(const [x,z,w,d] of [[60,-95,.2,10],[70,-95,.2,10],[65,-100,10,.2],[65,-90,10,.2]])box(x,1.8,z,w,3.6,d,timber);
+const interiorBefore=new Set(scene.children);const roomFloor=box(65,-.06,-95,10,.1,10,timber);for(const [x,z,w,d] of [[60,-95,.2,10],[70,-95,.2,10],[65,-100,10,.2],[65,-90,10,.2]])box(x,1.8,z,w,3.6,d,timber);
 box(65,3.6,-95,10,.2,10,wood);const homeLight=new T.PointLight(0xffbd72,35,15,2);homeLight.position.set(65,2.8,-95);scene.add(homeLight);box(65,1,-90.15,1.4,2,.12,wood);box(66,.45,-98,1.6,.9,.9,timber);box(66,.94,-98,1.7,.12,1,wood);box(66,.55,-97.52,.15,.22,.05,warm);box(62,.35,-98,1.6,.7,2.7,wood);box(62,.76,-98,1.5,.15,2.6,mat(0x81705d));
+const homeInterior=new T.Group();for(const child of [...scene.children])if(!interiorBefore.has(child))homeInterior.add(child);scene.add(homeInterior);homeInterior.visible=false;
 const home={inside:()=>camera.position.x>59&&camera.position.x<71,door:buildings[0].door,chest:new T.Vector3(66,1.7,-98),exit:new T.Vector3(65,1.7,-91),enter(){camera.position.set(65,1.7,-93);yaw=0;pitch=0;keys.clear();vitals.height=vitals.velocity=0;document.querySelector('#location').textContent='Дом Альфреда'},leave(){camera.position.copy(this.door);keys.clear();document.querySelector('#location').textContent='Темнолесье'}};
 // Merge static bark in spatial cells while leaving animated eye groups independent.
 scene.updateMatrixWorld(true);const treeBatches=new Map();scene.traverse(n=>{if(!n.isMesh||n.material!==bark||eyes.some(e=>n.parent===e.face))return;const pos=new T.Vector3();n.getWorldPosition(pos);const key=Math.floor(pos.x/20)+','+Math.floor(pos.z/20);if(!treeBatches.has(key))treeBatches.set(key,[]);treeBatches.get(key).push(n)});
@@ -127,9 +130,9 @@ const clock=new T.Clock();function update(){requestAnimationFrame(update);const 
 campaign.tick(dt);saves.tick(dt);if(vitals.hp<=0&&!dead){dead=true;active=false;keys.clear();music.pause();audio?.suspend();document.exitPointerLock?.();menu.style.display='flex';document.querySelector('#start').textContent='ОЧНУТЬСЯ СНОВА';say('Лес поглотил тебя. Можно начать снова.',100)}
 for(const e of eyes){const dist=camera.position.distanceTo(e.g.position);const blink=Math.pow(Math.max(0,Math.sin(elapsed*.7+e.phase)),35);e.face.scale.y=dist<3? .015:Math.max(.02,1-blink);}
 for(const a of wisps){a.w.position.y=a.y+Math.sin(elapsed+a.p)*.2;a.w.scale.setScalar(.7+Math.sin(elapsed*1.4+a.p)*.3)}waterTex.offset.x=elapsed*.008;for(let i=0;i<flames.length;i++)flames[i].intensity=(flames[i]===fireLight||flames[i]===forestFireLight?45:24)*(1+Math.sin(elapsed*7+i)*.07);const frame=Math.floor(elapsed*10)%16;fireMap.offset.set((frame%4)/4,1-(Math.floor(frame/4)+1)/4);
-for(const n of [guard,...residents,wolf,...wildlife])if(!(n.stun>0))n.update(camera);
+for(const n of [guard,...residents,wolf,...wildlife])if(!(n.stun>0))n.update(camera);if(active)for(const n of [guard,...residents,wolf,...wildlife,...world.mobs,world.hunter,...encounter.mobs])if(n.g.visible)n.animate?.(dt);
 for(const [id,value] of [['hp',vitals.hp],['stamina',vitals.stamina],['mana',vitals.mana]]){document.querySelector('#'+id+' .fill').style.width=(value/maximum(vitals,id)*100)+'%';document.querySelector('#'+id+' span').textContent=Math.ceil(value)+' / '+maximum(vitals,id);}
-renderer.render(scene,camera)}update();window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth*.8,innerHeight*.8,false)});
+homeInterior.visible=home.inside();renderer.render(scene,camera)}update();window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth*.8,innerHeight*.8,false)});
 
 renderer.domElement.addEventListener('mousedown',()=>dragging=true);document.addEventListener('mouseup',()=>dragging=false);
 
@@ -144,10 +147,10 @@ if(wolf.hp<=0)return;dt=statusStep(wolf,frameDt);if(dt<=0)return;
 const inVillage=home.inside()||camera.position.z< -83&&camera.position.z> -121&&Math.abs(camera.position.x)<17;
 if(wolf.mode!=='attack'&&!inVillage&&wolfMode(camera.position,wolfHome)==='attack'){wolf.mode='attack';wolf.aggroOrigin=camera.position.clone();animalCall(true)}
 if(wolf.mode==='attack'&&(inVillage||camera.position.distanceTo(wolf.aggroOrigin)>24)){wolf.mode='return';wolf.patrolTarget=null;}
-const mode=wolf.mode;threat.textContent='';
+const mode=wolf.mode;if(mode!=='attack')wolf.attackWindup=0;threat.textContent='';
 wolf.cooldown=Math.max(0,wolf.cooldown-dt);
 const distance=Math.hypot(camera.position.x-wolf.g.position.x,camera.position.z-wolf.g.position.z);
-if(mode==='attack'){if(distance>1.2)move(wolf,camera.position,3.5,dt);if(distance<1.7&&vitals.height<.9&&wolf.cooldown===0&&[.2,.4,.6,.8].every(t=>free(wolf.g.position.x+(camera.position.x-wolf.g.position.x)*t,wolf.g.position.z+(camera.position.z-wolf.g.position.z)*t,.05))){wolf.cooldown=1.2;campaign.onDamage(14);if(vitals.hp===0){dead=true;active=false;keys.clear();music.pause();audio?.suspend();document.exitPointerLock?.();menu.style.display='flex';document.querySelector('#start').textContent='ОЧНУТЬСЯ СНОВА';say('Лес поглотил тебя. Можно начать снова.',100)}}}else{if(!wolf.patrolTarget||wolf.g.position.distanceTo(wolf.patrolTarget)<.6){for(let i=0;i<20;i++){const a=rand()*Math.PI*2,r=rand()*7;const x=wolfHome.x+Math.cos(a)*r,z=wolfHome.z+Math.sin(a)*r;if(free(x,z)){wolf.patrolTarget=new T.Vector3(x,0,z);break}}}move(wolf,wolf.patrolTarget||wolfHome,1.25,dt)}
+if(mode==='attack'){if(distance>1.2&&!wolf.attackWindup)move(wolf,camera.position,3.5,dt);biteAttack(wolf,dt,distance<1.7&&vitals.height<.9&&[.2,.4,.6,.8].every(t=>free(wolf.g.position.x+(camera.position.x-wolf.g.position.x)*t,wolf.g.position.z+(camera.position.z-wolf.g.position.z)*t,.05)),()=>campaign.onDamage(14),1.2);}else{if(!wolf.patrolTarget||wolf.g.position.distanceTo(wolf.patrolTarget)<.6){for(let i=0;i<20;i++){const a=rand()*Math.PI*2,r=rand()*7;const x=wolfHome.x+Math.cos(a)*r,z=wolfHome.z+Math.sin(a)*r;if(free(x,z)){wolf.patrolTarget=new T.Vector3(x,0,z);break}}}move(wolf,wolf.patrolTarget||wolfHome,1.25,dt)}
 }
 
 

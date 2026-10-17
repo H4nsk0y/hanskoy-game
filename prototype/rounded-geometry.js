@@ -1,0 +1,3 @@
+import * as T from './vendor/three.module.js';
+// Keep box UVs/material groups, round the silhouette and share analytic corner normals.
+export function roundedBox(w,h,d,r=Math.min(w,h,d)*.38){const geo=new T.BoxGeometry(w,h,d,6,6,6),p=geo.attributes.position,n=geo.attributes.normal,v=new T.Vector3(),core=new T.Vector3(),delta=new T.Vector3();for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);core.set(T.MathUtils.clamp(v.x,-w/2+r,w/2-r),T.MathUtils.clamp(v.y,-h/2+r,h/2-r),T.MathUtils.clamp(v.z,-d/2+r,d/2-r));delta.copy(v).sub(core).normalize();v.copy(core).addScaledVector(delta,r);p.setXYZ(i,v.x,v.y,v.z);n.setXYZ(i,delta.x,delta.y,delta.z)}geo.computeBoundingSphere();return geo}

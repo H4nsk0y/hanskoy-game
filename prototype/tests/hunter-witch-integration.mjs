@@ -6,7 +6,7 @@ import {HELMETS,gearBonus,applyGear} from '../equipment.js';
 import {createInventory,addItem,countItem,moveItem} from '../inventory.js';
 import {regenerate} from '../player-stats.js';
 let source=await readFile(new URL('../deep-forest.js',import.meta.url),'utf8');
-for(const f of ['actor-state.js','vendor/three.module.js','ecology.js','progress.js','boss-combat.js','navigation.js','combat-rules.js'])source=source.replace("'./"+f+"'",JSON.stringify(new URL('../'+f,import.meta.url).href));
+for(const f of ['actor-state.js','vendor/three.module.js','ecology.js','progress.js','boss-combat.js','navigation.js','combat-rules.js','enemy-animation.js'])source=source.replace("'./"+f+"'",JSON.stringify(new URL('../'+f,import.meta.url).href));
 source=source.replace("import {modelActor,witchMaterial} from './models.js';",`function modelActor(scene,m,x,z,height){const g=new T.Group();g.position.set(x,0,z);scene.add(g);return {g,height,update(){}}}function witchMaterial(){return new T.MeshStandardMaterial()}`);
 const {deepForest}=await import('data:text/javascript,'+encodeURIComponent(source));
 class E{constructor(){this.children=[];this.style={};this.dataset={};this.hidden=false;this.textContent='';this.classList={add(){},remove(){}}}set innerHTML(v){this.children=[]}append(...v){this.children.push(...v)}prepend(v){this.children.unshift(v)}addEventListener(){}}
