@@ -1,4 +1,5 @@
 import * as T from './vendor/three.module.js';
+import {statusStep} from './combat-rules.js';
 import {steer} from './navigation.js';
 export const CURSED_FIRE={x:280,z:-177,radius:8};
 export const ARROW_SPEED=30;
@@ -7,7 +8,7 @@ export function bossCombat({scene,camera,hunter,witch,free,rand}){
   const shots=[],pools=[];let time=0,healUsed=false,healLeft=0;
   const aura=new T.Mesh(new T.SphereGeometry(1.2,12,10),new T.MeshBasicMaterial({color:0x50ff65,transparent:true,opacity:.2,wireframe:true,depthWrite:false}));aura.position.y=1;witch.g.add(aura);aura.visible=false;
   const sight=n=>{const dx=camera.position.x-n.g.position.x,dz=camera.position.z-n.g.position.z,steps=Math.ceil(Math.hypot(dx,dz)/.4);for(let i=1;i<steps;i++)if(!free(n.g.position.x+dx*i/steps,n.g.position.z+dz*i/steps,.05))return false;return true};
-  function move(n,engaged,dt){
+  function move(n,engaged,dt){if(dt<=0)return;
     n.timer=(n.timer||0)-dt;
     const dx=camera.position.x-n.g.position.x,dz=camera.position.z-n.g.position.z,d=Math.hypot(dx,dz)||1;
     if(n.timer<=0||!n.target){n.timer=engaged?1.2+rand():2+rand()*2;const side=rand()<.5?-1:1;
@@ -16,7 +17,7 @@ export function bossCombat({scene,camera,hunter,witch,free,rand}){
       n.target.x=T.MathUtils.clamp(n.target.x,182,298);n.target.z=T.MathUtils.clamp(n.target.z,-196,-41);
     }
     if(n.g.position.distanceTo(n.home)>48)n.target.copy(n.home);
-    steer(n,n.target,engaged?2.4:1.1,dt,free,bounds);if(engaged)n.heading=Math.atan2(dx,dz);n.update();
+    steer(n,n.target,engaged?(n===hunter?1.25:2.4):1.1,dt,free,bounds);if(engaged)n.heading=Math.atan2(dx,dz);n.update();
   }
   function spawnShot({position,velocity,damage=14,arrow=false,large=false,falling=false,delay=0,age=0}){
     const m=new T.Mesh(arrow?new T.CylinderGeometry(.012,.012,.55,5):new T.SphereGeometry(falling?.45:large?.28:.12,10,8),new T.MeshBasicMaterial({color:arrow?0xb8a47d:large?0x73ff2f:0xff732c}));m.position.fromArray(position);m.visible=delay<=0;scene.add(m);shots.push({m,v:new T.Vector3().fromArray(velocity),damage,arrow,large,falling,delay,age});
@@ -25,17 +26,17 @@ export function bossCombat({scene,camera,hunter,witch,free,rand}){
   function pool(position,age=0,exposure=0){const g=new T.Group();g.position.fromArray(position);g.position.y=.04;const m=new T.Mesh(new T.CircleGeometry(2.4,32),new T.MeshBasicMaterial({color:0xff5b17,transparent:true,opacity:.6,side:T.DoubleSide,depthWrite:false}));m.rotation.x=-Math.PI/2;g.add(m);const ring=new T.Mesh(new T.TorusGeometry(2.3,.06,5,32),new T.MeshBasicMaterial({color:0xffb02d}));ring.rotation.x=Math.PI/2;g.add(ring);scene.add(g);pools.push({g,age,exposure})}
   function dispose(n){scene.remove(n);n.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}})}
   function clear(){for(const b of shots)dispose(b.m);shots.length=0;for(const p of pools)dispose(p.g);pools.length=0}
-  function tick(dt,onDamage){time+=dt;
-    if(hunter.g.visible&&hunter.hp>0){const d=camera.position.distanceTo(hunter.g.position),engaged=d<80;move(hunter,engaged,dt);hunter.cooldown=Math.max(0,hunter.cooldown-dt);
+  function tick(dt,onDamage){time+=dt;const frameDt=dt;
+    if(hunter.g.visible&&hunter.hp>0){const dt=statusStep(hunter,frameDt);const d=camera.position.distanceTo(hunter.g.position),engaged=d<22;move(hunter,engaged,dt);hunter.cooldown=Math.max(0,hunter.cooldown-dt);
       if(engaged){for(const a of hunter.g.userData.arms||[])a.rotation.x=-1.15;const attr=hunter.g.userData.string?.geometry.attributes.position;if(attr){attr.setXYZ(1,0,0,-.18*Math.min(1,1-hunter.cooldown/.9));attr.needsUpdate=true}
-        if(hunter.cooldown===0&&sight(hunter)){hunter.cooldown=.9;const fan=rand()<.35,burst=rand()<.4;const angles=fan?[-.13,0,.13]:[0];for(const angle of angles)arrow(angle);if(burst){arrow(0,.47);arrow(0,.72)}}}
+        if((dt>0||frameDt===0&&!hunter.stun)&&hunter.cooldown===0&&sight(hunter)){hunter.cooldown=1.5;const special=rand(),fan=special<.15,burst=special>=.15&&special<.30;const angles=fan?[-.13,0,.13]:[0];for(const angle of angles)arrow(angle);if(burst){arrow(0,.47);arrow(0,.72)}}}
     }
-    if(witch.g.visible&&witch.hp>0){const d=camera.position.distanceTo(witch.g.position),engaged=d<80;move(witch,engaged,dt);witch.cooldown=Math.max(0,witch.cooldown-dt);
+    if(witch.g.visible&&witch.hp>0){const dt=statusStep(witch,frameDt);const d=camera.position.distanceTo(witch.g.position),engaged=d<80;move(witch,engaged,dt);witch.cooldown=Math.max(0,witch.cooldown-dt);
       if(!healUsed&&witch.hp<60){healUsed=true;healLeft=10}if(healLeft>0){const step=Math.min(dt,healLeft);witch.hp=Math.min(200,witch.hp+5*step);healLeft-=step}aura.visible=healLeft>0;aura.rotation.y=time*2;aura.scale.setScalar(1+Math.sin(time*5)*.12);
-      if(engaged&&witch.cooldown===0&&sight(witch)){witch.cooldown=1.8+rand()*.6;if(rand()<.35){spawnShot({position:[camera.position.x,9,camera.position.z],velocity:[0,-12,0],falling:true,damage:0})}
+      if((dt>0||frameDt===0&&!witch.stun)&&engaged&&witch.cooldown===0&&sight(witch)){witch.cooldown=1.8+rand()*.6;if(rand()<.35){spawnShot({position:[camera.position.x,9,camera.position.z],velocity:[0,-12,0],falling:true,damage:0})}
         else{const large=rand()<.15,pos=witch.g.position.clone().add(new T.Vector3(0,1.4,0)),v=camera.position.clone().sub(pos).normalize().multiplyScalar(large?19:25);spawnShot({position:pos.toArray(),velocity:v.toArray(),large,damage:large?25:15})}}
     }else{aura.visible=false;healLeft=0}
-    for(let i=shots.length-1;i>=0;i--){const b=shots[i];if(b.arrow&&hunter.hp<=0){dispose(b.m);shots.splice(i,1);continue}if(b.delay>0){b.delay-=dt;if(b.delay>0)continue;b.m.visible=true}const old=b.m.position.clone();if(b.arrow)b.v.y-=9.8*dt;b.m.position.addScaledVector(b.v,dt);b.m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),b.v.clone().normalize());b.age+=dt;
+    for(let i=shots.length-1;i>=0;i--){const b=shots[i];if(b.arrow&&hunter.hp<=0){dispose(b.m);shots.splice(i,1);continue}if(b.delay>0){if(b.arrow&&hunter.stun>0)continue;b.delay-=dt;if(b.delay>0)continue;b.m.visible=true}const old=b.m.position.clone();if(b.arrow)b.v.y-=9.8*dt;b.m.position.addScaledVector(b.v,dt);b.m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),b.v.clone().normalize());b.age+=dt;
       if(b.falling){if(b.m.position.y<=.05){pool([b.m.position.x,0,b.m.position.z]);dispose(b.m);shots.splice(i,1)}continue}
       const delta=b.m.position.clone().sub(old),steps=Math.max(1,Math.ceil(delta.length()/.15));let remove=b.age>(b.arrow?4:5)||b.m.position.y<0;
       for(let j=1;j<=steps&&!remove;j++){const point=old.clone().addScaledVector(delta,j/steps);if(!free(point.x,point.z,.05)){remove=true;break}if(point.distanceTo(camera.position)<.5){onDamage(b.damage,b.arrow?'physical':'magic');remove=true}}
