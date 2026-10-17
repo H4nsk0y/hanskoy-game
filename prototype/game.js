@@ -139,7 +139,7 @@ renderer.domElement.addEventListener('mousedown',()=>dragging=true);document.add
 function free(x,z,r=.45){return !blockers.some(b=>Math.hypot(x-b.x,z-b.z)<b.r+r)}
 function move(n,target,speed,dt){return steer(n,target,speed,dt,free,(x,z)=>n!==wolf||z>=-81)}
 function updateCreatures(dt){const frameDt=dt;
-for(const n of [...wildlife,...residents]){if(n.hp<=0)continue;const dt=statusStep(n,frameDt);if(dt<=0)continue;n.timer-=dt;if(n.timer<=0){n.timer=3+rand()*5;for(let i=0;i<12;i++){const x=n.x+(rand()-.5)*(residents.includes(n)?2:7),z=n.z+(rand()-.5)*(residents.includes(n)?2:7);if(free(x,z)){n.target.set(x,0,z);break}}}if(move(n,n.target,residents.includes(n)?.45:n===wildlife[2]?.8:1.5,dt))n.g.position.y=Math.abs(Math.sin(elapsed*9))*(residents.includes(n)?.015:.12);}
+for(const n of [...wildlife,...residents]){if(n.hp<=0)continue;const dt=statusStep(n,frameDt);if(dt<=0)continue;n.timer-=dt;if(n.timer<=0){n.timer=3+rand()*5;for(let i=0;i<12;i++){const x=n.x+(rand()-.5)*(residents.includes(n)?2:7),z=n.z+(rand()-.5)*(residents.includes(n)?2:7);if(free(x,z)){(n.target??=new T.Vector3()).set(x,0,z);break}}}if(move(n,n.target,residents.includes(n)?.45:n===wildlife[2]?.8:1.5,dt))n.g.position.y=Math.abs(Math.sin(elapsed*9))*(residents.includes(n)?.015:.12);}
 if(wolf.hp<=0)return;dt=statusStep(wolf,frameDt);if(dt<=0)return;
 const inVillage=home.inside()||camera.position.z< -83&&camera.position.z> -121&&Math.abs(camera.position.x)<17;
 if(wolf.mode!=='attack'&&!inVillage&&wolfMode(camera.position,wolfHome)==='attack'){wolf.mode='attack';wolf.aggroOrigin=camera.position.clone();animalCall(true)}
