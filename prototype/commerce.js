@@ -1,7 +1,10 @@
-import {addItem,ITEMS} from './inventory.js';
+import {addItem,ITEMS,equipmentClass} from './inventory.js';
 export const STOCK={smith:[{id:'sword_fine',count:1,price:30},{id:'bow_fine',count:1,price:30},{id:'mage_fine',count:1,price:30},{id:'arrow',count:10,price:3}],mary:[{id:'mary_ale',count:1,price:5}]};
-export const SELL={fang:5,carcass:3};
-export function buy(p,slots,merchant,index){const offer=STOCK[merchant]?.[index];if(!p.rewards.includes('rabbit-quest')||!offer)return 'Магазин пока закрыт.';if((p.gold||0)<offer.price)return 'Недостаточно золота.';const copy=slots.map(i=>i?{...i}:null);if(!addItem(copy,offer.id,offer.count))return 'Освободите место в сумке.';slots.splice(0,slots.length,...copy);p.gold=(p.gold||0)-offer.price;return ''}
+for(const [id,item] of Object.entries(ITEMS))if(item.slot>=2&&item.slot<=5)STOCK.smith.push({id,count:1,price:{2:10,3:25,4:20,5:12}[item.slot]});
+export const availableOffer=(p,offer)=>!!offer&&(!equipmentClass(offer.id)||equipmentClass(offer.id)===p.classId)&&(offer.id!=='arrow'||p.classId==='bow');
+export const SELL={fang:5,carcass:3,mary_ale:2,sword_fine:15,bow_fine:15,mage_fine:15,shield_fine:15,quiver:15,grimoire:15};
+for(const offer of STOCK.smith)if(ITEMS[offer.id].slot>=2)SELL[offer.id]=Math.floor(offer.price/2);
+export function buy(p,slots,merchant,index){const offer=STOCK[merchant]?.[index];if(!p.rewards.includes('rabbit-quest')||!offer)return 'Магазин пока закрыт.';if(!availableOffer(p,offer))return 'Этот товар предназначен для другого класса.';if((p.gold||0)<offer.price)return 'Недостаточно золота.';const copy=slots.map(i=>i?{...i}:null);if(!addItem(copy,offer.id,offer.count))return 'Освободите место в сумке.';slots.splice(0,slots.length,...copy);p.gold=(p.gold||0)-offer.price;return ''}
 export function sell(p,slots,index){const item=slots[index],price=SELL[item?.id];if(!p.rewards.includes('rabbit-quest')||index<6||!price)return 'Этот предмет не продаётся.';item.count--;if(!item.count)slots[index]=null;p.gold=(p.gold||0)+price;return ''}
 export const weaponClass=id=>ITEMS[id]?.weaponClass||(['sword','bow','mage'].includes(id)?id:null);
 export const weaponMultiplier=id=>ITEMS[id]?.damageMultiplier||1;

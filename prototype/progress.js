@@ -1,4 +1,4 @@
-export const CLASSES={sword:{name:'Мечник',damage:9.75,cooldown:.65,incoming:.8,regen:1,stamina:1},bow:{name:'Лучник',damage:6.5,cooldown:.9,incoming:1,regen:1,stamina:2},mage:{name:'Маг',damage:13,cooldown:.9,incoming:1.1,regen:.5,stamina:1}};
+export const CLASSES={sword:{name:'Мечник',damage:9.75,cooldown:.65,incoming:.8,regen:1,stamina:1},bow:{name:'Лучник',damage:8.5,cooldown:.9,incoming:1,regen:1,stamina:2},mage:{name:'Маг',damage:14,cooldown:.9,incoming:1.1,regen:.5,stamina:1}};
 export function createProgress(){return {gold:0,stage:'safe',rejected:false,classId:null,xp:0,level:1,arrows:0,rewards:[],wolfDead:false,pendingLevels:0}}
 export function reward(p,id,kind,amount){if(p.rewards.includes(id))return false;p.rewards.push(id);p.xp+=amount??({quest:40,monster:10,mob:5})[kind];while(p.xp>=250){p.xp-=250;p.level++;p.pendingLevels=(p.pendingLevels||0)+1}return true}
 export function chooseClass(p,id){if(p.classId||p.stage!=='smith'||!CLASSES[id])return false;p.classId=id;p.arrows=id==='bow'?50:0;p.stage='armed';return true}
