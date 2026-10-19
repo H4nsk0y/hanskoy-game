@@ -1,0 +1,71 @@
+import {torchModel} from './torches.js';
+import * as T from './vendor/three.module.js';
+import {skeletonModel} from './skeletons.js';
+import {statusStep} from './combat-rules.js';
+import {steer} from './navigation.js';
+import {packActor,restoreActor} from './actor-state.js';
+import {respawnCandidates} from './ecology.js';
+export const CEMETERY={x:-330,z:-120,entryX:-330,entryZ:-43,minX:-397,maxX:-263,minZ:-197,maxZ:-38};
+export function cemetery({scene,camera,rand,resetMotion,groundMap,skyMap,backdropMaterial,stoneMap,fireMap}){
+ const root=new T.Group();scene.add(root);root.visible=false;const mobs=[],drops=[],shots=[],blockers=[];let inside=false,built=false,time=0,torchTaken=false;const torches=[];
+ const entry=new T.Vector3(-330,0,-43),gate=new T.Vector3(-35,0,-100);
+ const stone=new T.MeshStandardMaterial({color:0x899a9e,map:stoneMap||null,roughness:.9}),black=new T.MeshStandardMaterial({color:0x15252b}),glow=new T.MeshBasicMaterial({color:0x59e5c1});
+ function part(geo,mat,x,y,z,parent=root){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);parent.add(m);return m}
+ function box(x,y,z,w,h,d,mat=stone,parent=root){return part(new T.BoxGeometry(w,h,d),mat,x,y,z,parent)}
+ function portal(pos,parent){for(const side of [-1,1]){box(pos.x+side*2.2,2.1,pos.z,.65,4.2,.8,stone,parent);part(new T.ConeGeometry(.55,1,4),black,pos.x+side*2.2,4.7,pos.z,parent)}box(pos.x,4.05,pos.z,5,.4,.8,stone,parent);const ring=part(new T.TorusGeometry(1.45,.035,5,32),glow,pos.x,1.8,pos.z,parent);return ring}
+ const villageGate=new T.Group();villageGate.position.copy(gate);villageGate.rotation.y=-Math.PI/2;scene.add(villageGate);portal(new T.Vector3(),villageGate);
+ function bounds(x,z){return x>CEMETERY.minX&&x<CEMETERY.maxX&&z>CEMETERY.minZ&&z<CEMETERY.maxZ}
+ function free(x,z,r=.35){return bounds(x,z)&&!blockers.some(b=>b.w?Math.abs(x-b.x)<b.w/2+r&&Math.abs(z-b.z)<b.d/2+r:Math.hypot(x-b.x,z-b.z)<b.r+r)}
+ function projectileBlocked(p){if(!bounds(p.x,p.z))return true;return blockers.some(b=>{if(p.y<0||p.y>(b.h??7))return false;if(b.grave){const c=Math.cos(b.angle),s=Math.sin(b.angle),dx=p.x-b.x,dz=p.z-b.z;return Math.abs(dx*c-dz*s)<.52&&Math.abs(dx*s+dz*c)<.19}return b.w?Math.abs(p.x-b.x)<b.w/2+.05&&Math.abs(p.z-b.z)<b.d/2+.05:Math.hypot(p.x-b.x,p.z-b.z)<b.r+.05})}
+ function build(){if(built)return;built=true;const floor=part(new T.PlaneGeometry(140,166),new T.MeshStandardMaterial({color:0x526160,map:groundMap||null,roughness:1}),-330,-.05,-120);floor.rotation.x=-Math.PI/2;portal(entry,root);
+  if(skyMap)part(new T.SphereGeometry(165,24,12),new T.MeshBasicMaterial({map:skyMap,color:0x768aad,side:T.BackSide,depthWrite:false,fog:false}),-330,0,-120);
+  if(backdropMaterial)part(new T.CylinderGeometry(135,135,85,48,1,true),backdropMaterial,-330,28,-120);
+  part(new T.SphereGeometry(3,16,12),new T.MeshBasicMaterial({color:0x9ec8df,fog:false}),-364,34,-172);
+
+  for(const [x,y,z,portable] of [[-378.4,.65,-88.7,false],[-285.2,.65,-164.3,false],[-335,1.3,-110.7,true]]){const g=torchModel(root,{map:fireMap});g.position.set(x,y,z);if(!portable)box(x,.4,z,.22,.8,.22,black);else{const bracket=box(x,1.5,z-.2,.16,.12,.5,black)}torches.push({g,portable});if(portable)g.visible=!torchTaken}
+  // Crypt is solid and visibly sealed until the next story chapter.
+  box(-330,3,-120,14,6,17);box(-330,6.3,-120,16,.7,19,black);const roof=part(new T.ConeGeometry(11,4,4),black,-330,8.5,-120);roof.rotation.y=Math.PI/4;
+  blockers.push({x:-330,z:-120,w:14,d:17});
+  for(const x of [-335.8,-332.25,-327.75,-324.2]){part(new T.CylinderGeometry(.32,.4,5.7,8),stone,x,2.85,-111.08);box(x,.15,-110.95,.9,.3,.9);box(x,5.65,-110.95,.85,.3,.85)}
+  const arch=part(new T.TorusGeometry(2.25,.25,6,18,Math.PI),stone,-330,3.4,-111.02);
+  for(let i=0;i<3;i++)box(-330,.08+i*.11,-109.5-i*.6,6-i*.45,.16+i*.22,1.5);
+  box(-330,9.5,-120,.24,2,.3);box(-330,9.75,-120,1.3,.23,.3);
+  for(const x of [-335,-325]){box(x,3.5,-111.35,1,1.9,.12,black);const slit=box(x,3.5,-111.23,.18,1.5,.08,glow);box(x,3.7,-111.2,.65,.12,.08,glow)}
+  const coldLight=new T.PointLight(0x7bd4d8,32,24,2);coldLight.position.set(-330,5,-105);root.add(coldLight);
+box(-330,2.1,-111.4,3.3,4.2,.15,black);for(let x=-331.3;x< -328.5;x+=.36)box(x,2.1,-111.23,.08,4,.12);box(-330,2.1,-111.15,3.1,.15,.14,black);part(new T.TorusGeometry(.32,.065,5,10),glow,-330,2.25,-111.05);
+  for(const x of [-337.3,-322.7])for(const z of [-128,-112]){part(new T.CylinderGeometry(.45,.55,6.5,8),stone,x,3.25,z);part(new T.ConeGeometry(.7,1.4,5),black,x,7,z)}
+  // Instanced gravestones and soil mounds keep draw calls low.
+  const points=[];for(let z=-63;z>=-186;z-=10)for(let x=-388;x<=-272;x+=9){if(Math.abs(x+330)<5||Math.abs(x+330)<13&&Math.abs(z+120)<15)continue;points.push([x+(Math.sin(x+z)*1.3),z])}
+  const stones=new T.InstancedMesh(new T.BoxGeometry(.9,1.3,.24),stone,points.length),mounds=new T.InstancedMesh(new T.SphereGeometry(1,8,5),new T.MeshStandardMaterial({color:0x273c35}),points.length),crosses=new T.InstancedMesh(new T.BoxGeometry(1.15,.15,.16),stone,points.length);const temp=new T.Object3D();
+  points.forEach(([x,z],i)=>{temp.position.set(x,.65,z);temp.rotation.set(0,Math.sin(i)*.25,Math.sin(i*3)*.12);temp.scale.set(1,1,1);temp.updateMatrix();stones.setMatrixAt(i,temp.matrix);temp.position.y=1.02;temp.updateMatrix();crosses.setMatrixAt(i,temp.matrix);temp.position.set(x,.08,z+1.5);temp.rotation.set(0,0,0);temp.scale.set(.7,.16,1.3);temp.updateMatrix();mounds.setMatrixAt(i,temp.matrix);blockers.push({x,z,r:.55,h:1.42,grave:true,angle:Math.sin(i)*.25})});root.add(stones,mounds,crosses);
+  for(let i=0;i<points.length;i+=9){const [x,z]=points[i];part(new T.SphereGeometry(.045,5,4),glow,x+.5,.45,z+.4)}
+  const mistMaterial=new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,uniforms:{},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;void main(){vec2 p=(vUv-.5)*2.;float a=exp(-dot(p*vec2(1.5,2.4),p*vec2(1.5,2.4)))*.11;gl_FragColor=vec4(.16,.34,.44,a);}'});
+  for(let i=0;i<16;i++){const fog=part(new T.PlaneGeometry(22,3),mistMaterial,-386+(i%4)*36,.6,-76-Math.floor(i/4)*33);fog.rotation.y=Math.sin(i)*.4}
+
+  for(let i=0;i<24;i++){const a=i/24*Math.PI*2,x=-330+Math.cos(a)*64,z=-120+Math.sin(a)*76;const trunk=part(new T.CylinderGeometry(.09,.42,6+i%4,5),black,x,3+i%4/2,z);trunk.rotation.z=Math.sin(i)*.16;for(const side of [-1,1]){const branch=part(new T.CylinderGeometry(.025,.13,3.5,5),black,x+side*.9,4.2,z);branch.rotation.z=side*.8}blockers.push({x,z,r:.55})}
+  for(const [x,z] of [[-330,-62],[-344,-110],[-316,-110],[-344,-135],[-316,-135]]){box(x,.8,z,.35,1.6,.35,black);part(new T.SphereGeometry(.11,6,5),glow,x,1.7,z);const light=new T.PointLight(0x53d8b3,8,11,2);light.position.set(x,2,z);root.add(light)}
+  for(let i=0;i<32;i++){const mixed=(i*13)%32,kind=mixed<18?'sword':mixed<28?'bow':'mage';let x,z;for(let k=0;k<250;k++){const a=(i*2.399963+k*.71),rad=8+Math.sqrt((i+.5)/32)*51;x=-330+Math.cos(a)*rad+(rand()-.5)*8;z=-124+Math.sin(a)*rad*1.05+(rand()-.5)*8;if(free(x,z,.8)&&mobs.every(n=>Math.hypot(x-n.home.x,z-n.home.z)>5))break}const n=skeletonModel(root,kind,x,z);Object.assign(n,{id:'cemetery-'+i,species:'skeleton-'+kind,kind,hp:70,maxHp:70,generation:0,home:new T.Vector3(x,0,z),target:new T.Vector3(x,0,z),timer:0,cooldown:1,aggro:null,attackWindup:0});mobs.push(n)}
+ }
+ function nearPortal(){return camera.position.distanceTo((inside?entry:gate).clone().setY(camera.position.y))<3.6}
+ function travel(){if(!inside)build();inside=!inside;root.visible=inside;camera.position.set(inside?-330:-31,1.7,inside?-49:-100);resetMotion();for(const n of mobs){n.aggro=null;n.attackWindup=0}clearShots();document.querySelector('#location').textContent=inside?'Кладбище Темнолесья':'Темнолесье'}
+ function nearTorch(){return inside&&!torchTaken&&torches.some(t=>t.portable&&camera.position.distanceTo(t.g.position)<2.8)}
+ function takeTorch(pickup){if(!nearTorch()||!pickup('torch'))return false;torchTaken=true;torches.find(t=>t.portable).g.visible=false;return true}
+ function warm(){return inside&&torches.some(t=>t.g.visible&&camera.position.distanceTo(t.g.position)<3)}
+ function nearCrypt(){return inside&&Math.hypot(camera.position.x+330,camera.position.z+109)<3.5}
+ function drop(pos){const g=new T.Group();root.add(g);g.position.copy(pos);const mat=new T.MeshStandardMaterial({color:0xeee9c9,emissive:0x747050,emissiveIntensity:.8});const bone=part(new T.CapsuleGeometry(.055,.34,3,6),mat,0,0,0,g);bone.rotation.z=.8;for(const side of [-1,1])part(new T.SphereGeometry(.09,6,5),mat,side*.15,side*.15,0,g);drops.push({g,phase:rand()*7})}
+ function killed(n){if(!mobs.includes(n))return;if(rand()<.3)drop(n.g.position);for(const dead of respawnCandidates(mobs,n)){let pos=dead.home.clone();for(let k=0;k<20;k++){const p=dead.home.clone().add(new T.Vector3((rand()-.5)*5,0,(rand()-.5)*5));if(free(p.x,p.z,.6)){pos=p;break}}dead.g.position.copy(pos);dead.g.visible=true;dead.hp=70;dead.hit=false;dead.generation++;dead.aggro=null;dead.attackWindup=dead.stun=dead.slow=0;dead.cooldown=1}}
+ function dispose(m){root.remove(m);m.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}})}
+ function clearShots(){for(const b of shots)dispose(b.m);shots.length=0}
+ function spawnShot(n){const arrow=n.kind==='bow',pos=n.g.position.clone().add(new T.Vector3(0,1.5,0)),dir=camera.position.clone().sub(pos);if(arrow){const d=Math.max(.1,Math.hypot(dir.x,dir.z)),v=30,disc=v**4-9.8*(9.8*d*d+2*dir.y*v*v),angle=Math.atan((v*v-Math.sqrt(Math.max(0,disc)))/(9.8*d));dir.set(dir.x/d*Math.cos(angle),Math.sin(angle),dir.z/d*Math.cos(angle)).multiplyScalar(v)}else dir.normalize().multiplyScalar(22);const m=part(arrow?new T.CylinderGeometry(.014,.014,.6,5):new T.IcosahedronGeometry(.12),new T.MeshBasicMaterial({color:arrow?0xc7c09b:0x66ffb0}),pos.x,pos.y,pos.z);shots.push({m,v:dir,age:0,arrow})}
+ function tick(dt,{onDamage,pickup}){if(!inside)return;time+=dt;for(const t of torches)if(t.g.visible)t.g.userData.animate(time);for(const n of mobs){if(n.hp<=0)continue;const step=statusStep(n,dt);if(!step)continue;const distance=Math.hypot(camera.position.x-n.g.position.x,camera.position.z-n.g.position.z);if(!n.aggro&&distance<(n.kind==='sword'?9:20))n.aggro=camera.position.clone();if(n.aggro&&camera.position.distanceTo(n.aggro)>55)n.aggro=null;n.cooldown=Math.max(0,n.cooldown-step);const los=()=>{const start=n.g.position.clone().setY(1.5),steps=Math.ceil(distance/.2);for(let i=1;i<steps;i++)if(projectileBlocked(start.clone().lerp(camera.position,i/steps)))return false;return true};
+   if(n.attackWindup>0){n.attackWindup=Math.max(0,n.attackWindup-step);if(n.attackWindup===0&&n.aggro&&los()){if(n.kind==='sword'){if(distance<2.6&&camera.position.y<2.7)onDamage(28,'physical','skeleton')}else spawnShot(n)}}
+   if(n.aggro){if(n.kind==='sword'){if(distance>1.9)steer(n,camera.position,3.4,step,free)}else{if(distance>18||!los())steer(n,camera.position,2.5,step,free);else if(distance<7){const away=n.g.position.clone().sub(camera.position).setY(0).normalize().multiplyScalar(3).add(n.g.position);steer(n,away,1.8,step,free)}}n.heading=Math.atan2(camera.position.x-n.g.position.x,camera.position.z-n.g.position.z);if(n.cooldown===0&&!n.attackWindup&&distance<(n.kind==='sword'?2.5:38)&&los()){n.cooldown=n.kind==='sword'?1.4:2;n.attackWindup=n.kind==='sword'?.28:.4;n.cueAttack(n.kind,.65)}}
+   else{n.timer-=step;if(n.timer<=0){n.timer=3+rand()*3;n.target.copy(n.home).add(new T.Vector3((rand()-.5)*5,0,(rand()-.5)*5))}steer(n,n.target,.8,step,free)}n.update(step);
+  }
+  for(let i=shots.length-1;i>=0;i--){const b=shots[i],old=b.m.position.clone();b.age+=dt;if(b.arrow)b.v.y-=9.8*dt;b.m.position.addScaledVector(b.v,dt);b.m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),b.v.clone().normalize());let hit=false,blocked=false;const distance=old.distanceTo(b.m.position);for(let j=1;j<=Math.ceil(distance/.15);j++){const pos=old.clone().lerp(b.m.position,j/Math.ceil(distance/.15));if(projectileBlocked(pos)){blocked=true;break}if(pos.distanceTo(camera.position)<.5){hit=true;break}}if(hit)onDamage(28,b.arrow?'physical':'magic','skeleton');if(hit||blocked||b.age>4||b.m.position.y<0){dispose(b.m);shots.splice(i,1)}}
+  for(let i=drops.length-1;i>=0;i--){const d=drops[i];d.g.position.y=.45+Math.sin(time*2+d.phase)*.1;d.g.rotation.y=time;if(d.g.position.distanceTo(camera.position)<1.7&&pickup('bone')){dispose(d.g);drops.splice(i,1)}}
+ }
+ function snapshot(){return {torchTaken,layoutVersion:2,inside,built,time,mobs:mobs.map(packActor),drops:drops.map(d=>({position:d.g.position.toArray(),phase:d.phase})),shots:shots.map(b=>({position:b.m.position.toArray(),velocity:b.v.toArray(),age:b.age,arrow:b.arrow}))}}
+ function restore(s){torchTaken=!!s?.torchTaken;if(s?.built)build();for(const t of torches)if(t.portable)t.g.visible=!torchTaken;inside=!!s?.inside;root.visible=inside;time=s?.time||0;clearShots();for(const d of drops)dispose(d.g);drops.length=0;if(s?.built){for(const a of s.mobs){const n=mobs.find(n=>n.id===a.id);const home=n.home.clone();restoreActor(n,a);if(!s.layoutVersion){n.home.copy(home);if(!n.aggro&&!n.hit){n.g.position.copy(home);n.target=home.clone()}}}for(const d of s.drops){drop(new T.Vector3().fromArray(d.position));drops.at(-1).phase=d.phase}for(const b of s.shots){const m=part(b.arrow?new T.CylinderGeometry(.014,.014,.6,5):new T.IcosahedronGeometry(.12),new T.MeshBasicMaterial({color:b.arrow?0xc7c09b:0x66ffb0}),...b.position);shots.push({...b,m,v:new T.Vector3().fromArray(b.velocity)})}}else for(const n of mobs){n.hp=70;n.g.visible=true;n.g.position.copy(n.home);n.generation=0;n.aggro=null;n.cooldown=1;n.stun=n.slow=n.attackWindup=0}if(inside)document.querySelector('#location').textContent='Кладбище Темнолесья'}
+ return {get inside(){return inside},mobs,drops,blockers,torches,nearTorch,takeTorch,warm,projectileBlocked,can:(x,z)=>free(x,z,.25),free,nearPortal,nearCrypt,travel,tick,killed,snapshot,restore,reset(){inside=false;root.visible=false;clearShots();for(const n of mobs)n.aggro=null}};
+}

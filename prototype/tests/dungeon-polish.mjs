@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import * as T from '../vendor/three.module.js';
+import {lichDungeon} from '../lich-dungeon.js';
+import {torchModel} from '../torches.js';
+globalThis.document={querySelector:()=>({textContent:''})};
+const camera=new T.PerspectiveCamera(),scene=new T.Scene();let seed=42;const rand=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
+const d=lichDungeon({scene,camera,vitals:{hp:100,maxHp:100},rand,setPose:p=>camera.position.fromArray(p.position)});
+d.enter();assert(d.can(510,-126),'new wing connected');assert.equal(d.chests[0].g.position.x,482);
+camera.position.copy(d.chests[0].g.position).setY(1.7);const c=d.openChest();assert.equal(c.contents.length,2);assert(!d.takeChestItem(c,1,()=>false));assert.equal(c.contents.length,2);let gold=0;assert(d.takeChestItem(c,0,i=>(gold+=i.count,true)));assert(gold>=8&&gold<=20);const save=d.snapshot();d.restore(save);assert.equal(d.openChest().contents.length,1,'remaining potion persists');assert(d.takeChestItem(d.chests[0],0,()=>true));assert.equal(d.openChest().contents.length,0,'no reroll');
+d.enter('lich');camera.position.set(700,1.7,-115);let sounds=0;const events={onDamage(){},onSlow(){},onSound:id=>{if(id==='lich-summon')sounds++}};d.tick(.05,events);assert.equal(sounds,1);const before=d.boss.g.position.clone();const state=d.snapshot();state.teleportReady=0;state.boss.attackWindup=0;d.restore(state);d.tick(.05,events);assert(before.distanceTo(d.boss.g.position)>7);assert(d.can(d.boss.g.position.x,d.boss.g.position.z,1.2));assert(d.snapshot().teleportReady>=14);assert.equal(sounds,1);const restored=d.snapshot();d.restore(restored);assert.equal(d.snapshot().teleportReady,restored.teleportReady);
+const torch=torchModel(new T.Group(),{map:new T.Texture()});const flame=torch.children.find(c=>c.isSprite);assert.equal(flame.center.y,0);assert(flame.position.y>torch.children[1].position.y+.08);
+console.log('PASS dungeon expansion, wall chest, manual persistent loot/full bag/gold, safe teleport/cooldown/save, summon cue, unobscured flame');
