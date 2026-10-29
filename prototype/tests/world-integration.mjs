@@ -16,3 +16,4 @@ for(const classId of ['sword','bow','mage']){
 }
 w.witch.hp=0;const prior=w.drops.length;w.killed(w.witch,p);assert.equal(w.drops.length,prior+1);assert.equal(w.drops.at(-1).id,'witch_relic');
 console.log('PASS guaranteed troll gold, class-specific rare drops, no duplicate reward, world roundtrip and witch relic');
+p.rewards.push('witch-quest');w.syncHunter(p);assert(w.hunter.g.visible);assert.equal(w.hunter.hp,0,'returned hunter cannot become an attack target');assert.deepEqual(w.hunter.g.position.toArray(),[4,0,-95]);const returned=w.snapshot();w.restore(returned);w.syncHunter(p);assert.deepEqual(w.hunter.g.position.toArray(),[4,0,-95]);console.log('PASS peaceful hunter returns to village after witch quest and survives loading');

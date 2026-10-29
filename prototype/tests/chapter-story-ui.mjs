@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import * as T from '../vendor/three.module.js';
+import {chapter} from '../chapter.js';
+import {lichDungeon} from '../lich-dungeon.js';
+class E{constructor(){this.children=[];this.style={};this.dataset={};this.hidden=false;this.classList={add(){},remove(){}};this.textContent=''}set innerHTML(v){this.children=[]}append(...v){this.children.push(...v)}prepend(v){this.children.unshift(v)}addEventListener(){}}
+const nodes={},events={};globalThis.innerWidth=1280;globalThis.innerHeight=720;globalThis.document={querySelector:s=>nodes[s]??=new E(),createElement:()=>new E(),addEventListener:(k,f)=>events[k]=f,exitPointerLock(){}};
+const scene=new T.Scene(),camera=new T.PerspectiveCamera(),npc=()=>({g:new T.Group()}),vitals={hp:100,mana:100,stamina:100};let active=true;
+const dungeon=lichDungeon({scene,camera,vitals,rand:()=>.5,setPose:p=>camera.position.fromArray(p.position)});const cemetery={nearPortal:()=>false,nearTorch:()=>false,nearCrypt:()=>true};
+const c=chapter({scene,camera,vitals,dungeon,cemetery,guard:npc(),residents:[npc(),npc(),npc()],wolf:npc(),wildlife:[],keys:new Set(),active:()=>active,started:()=>true,time:()=>0,audio:()=>null,muted:()=>true,pause:()=>active=false,resume:()=>active=true,blocked:()=>false});
+const key=code=>events.keydown({code,preventDefault(){}}),click=text=>{const b=nodes['#dialog'].children.find(b=>b.onclick&&b.textContent===text);assert(b,text);b.onclick()};
+key('KeyE');assert(!dungeon.inside);assert(nodes['#dialog'].children.some(e=>e.textContent==='Запечатанный склеп'));click('Продолжить');c.p.rewards.push('ritual-purified');key('KeyE');assert(dungeon.inside);camera.position.set(480,1.7,-90);for(let i=6;i<18;i++)c.slots[i]={id:'fang',count:1};key('KeyE');click('Забрать всё');assert.equal(c.p.gold,14);assert.equal(dungeon.chests[0].contents.length,1);assert(dungeon.chests[0].treasure.visible);c.slots[6]=null;click('Забрать всё');assert.equal(dungeon.chests[0].contents.length,0);assert(!dungeon.chests[0].treasure.visible);click('Закрыть');key('KeyE');assert.equal(c.p.gold,14,'reopening cannot reroll gold');console.log('PASS actual E quest gate and take-all UI/full bag/gold/empty chest visuals');
