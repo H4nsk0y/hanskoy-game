@@ -2,6 +2,9 @@
 export const ROLL={duration:.5,start:.08,end:.38,cost:20,cooldown:.8,speed:8};
 export const SKILLS={sword:{name:'Удар щитом',icon:'🛡',cost:25,cooldown:15,resource:'stamina',description:'15 урона, оглушение на 3 с. Дальность меча.'},bow:{name:'Залп',icon:'➶',cost:40,cooldown:17,resource:'stamina',description:'Три прямые стрелы, расход одной. Скорость +30%, дальность 156 м.'},mage:{name:'Ледяная стрела',icon:'❄',cost:20,cooldown:12,resource:'mana',description:'Урон огненного шара +10%. Движение и атаки цели −50% на 7 с.'}};
 export function skillIcon(id){const art={sword:'<path d="M14 10H48V31Q44 47 31 55Q18 47 14 31Z" fill="#8b683c" stroke="#e6c57d" stroke-width="3"/><path d="M31 12V49M17 27H45" stroke="#b5c6d1" stroke-width="4"/><path d="M49 15L57 9M51 27H61M49 39L58 44" stroke="#ffe5aa" stroke-width="3"/>',bow:'<path d="M10 48L42 16M21 53L53 21M6 34L34 6M42 16L32 18M42 16L40 27M53 21L43 23M53 21L51 32M34 6L24 8M34 6L32 17" stroke="#f4d799" stroke-width="3" fill="none"/>',mage:'<path d="M9 51L40 20" stroke="#59c7ff" stroke-width="8"/><path d="M34 22L51 7L57 13L42 30Z" fill="#d3ffff" stroke="#6dcfff" stroke-width="2"/><path d="M14 12V28M6 20H22M9 15L19 25M9 25L19 15" stroke="#b7f5ff" stroke-width="2"/>'};return '<svg viewBox="0 0 64 64" aria-hidden="true">'+(art[id]||'')+'</svg>'}
+export const BOW_DRAW_SECONDS=1.5;
+export function bowDrawPower(seconds){return Math.min(1,Math.max(0,seconds/BOW_DRAW_SECONDS))}
+export function bowShotSpeed(seconds){return 30*(.6+.8*bowDrawPower(seconds))}
 export function skillPoints(level,rank=0){return Math.max(0,Math.floor(Math.min(100,level)/2)-rank)}
 export function scaledDamage(base,level){return base*(1+.05*(level-1))}
 export function criticalDamage(amount,roll=Math.random(),chance=.1){return amount*(roll<chance?2:1)}
@@ -9,3 +12,6 @@ export function blockHit(amount,type,v,guard,improved=false){if(type==='hazard'|
 export function statusStep(n,dt){const stunned=Math.min(dt,n.stun||0);n.stun=Math.max(0,(n.stun||0)-dt);const available=dt-stunned,slowed=Math.min(available,Math.max(0,(n.slow||0)-stunned));n.slow=Math.max(0,(n.slow||0)-dt);return available-slowed*.5}
 
 export function canSense(n,camera,distance,radius){const hiddenDistance=n.g?.position?Math.hypot(camera.position.x-n.g.position.x,camera.position.z-n.g.position.z):distance;if(camera.userData?.invisible&&hiddenDistance>.5){n.aggro=null;n.attackWindup=0;if(n.mode==='attack')n.mode='return';return false}return (camera.userData?.invisible?hiddenDistance:distance)<radius}
+
+// Body and head volumes are shared by ordinary and skill projectiles.
+export function hitVolumes(n){if(n.species==='ghost')return [[0,1.0,0,.7],[0,1.65,0,.35]];if(n.species==='troll'){const a=n.g.rotation?.y??n.heading??0;return [[0,1.6,0,1.05],[Math.sin(a)*.2,3.02,Math.cos(a)*.2,.66]]};return [[0,n.species==='player'?0:n.species==='lich'?2:n.species==='wolf'?.65:n.species==='hare'?.3:['witch','hunter','dark-self'].includes(n.species)?1:1.2,0,n.species==='player'?.5:n.species==='lich'?1.65:n.species==='hare'?.35:n.species==='wolf'?.6:.65]]}
