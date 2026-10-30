@@ -32,3 +32,5 @@ for(const [id,sound] of [['sword','sword'],['bow','bow'],['mage','fireball']]){c
 for(const [id,sound] of [['bow','volley'],['mage','ice']]){const f=fixture(id);f.learn();f.key('Digit1');assert.deepEqual(f.sounds,[sound]);}
 const fatal=fixture('mage');fatal.c.onDamage(1000,'magic','witch');fatal.c.onDamage(1000,'hazard','witch');assert.deepEqual(fatal.sounds,['witch-kill'],'only once for lethal witch damage');const other=fixture('mage');other.c.onDamage(1000,'physical','troll');assert.deepEqual(other.sounds,[]);const dry=fixture('mage');dry.vitals.mana=0;dry.mouse(0);assert.deepEqual(dry.sounds,[]);
 console.log('PASS player attack/skill sound routing, no dry fire, witch-only lethal cue once');
+
+const higherRank=fixture('sword');higherRank.learn();higherRank.learn();higherRank.key('Digit1');assert.equal(higherRank.wolf.hp,17,'second rank really adds 20 percent damage');

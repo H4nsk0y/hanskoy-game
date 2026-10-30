@@ -1,10 +1,10 @@
 import * as T from './vendor/three.module.js';
-import {statusStep} from './combat-rules.js';
+import {statusStep,canSense} from './combat-rules.js';
 import {steer} from './navigation.js';
 export const CURSED_FIRE={x:280,z:-177,radius:8};
 export const ARROW_SPEED=30;
 const bounds=(x,z)=>x>181&&x<299&&z< -40&&z> -197;
-export function bossCombat({scene,camera,hunter,witch,free,rand}){
+export function bossCombat({scene,camera,hunter,witch,free,rand,arenaBounds=null}){
   const shots=[],pools=[];let time=0,healUsed=false,healLeft=0,poolReady=0,laughReady=0,witchEngaged=false;
   const aura=new T.Mesh(new T.SphereGeometry(1.2,12,10),new T.MeshBasicMaterial({color:0x50ff65,transparent:true,opacity:.2,wireframe:true,depthWrite:false}));aura.position.y=1;witch.g.add(aura);aura.visible=false;
   const sight=n=>{const dx=camera.position.x-n.g.position.x,dz=camera.position.z-n.g.position.z,steps=Math.ceil(Math.hypot(dx,dz)/.4);for(let i=1;i<steps;i++)if(!free(n.g.position.x+dx*i/steps,n.g.position.z+dz*i/steps,.05))return false;return true};
@@ -14,10 +14,10 @@ export function bossCombat({scene,camera,hunter,witch,free,rand}){
     if(n.timer<=0||!n.target){n.timer=engaged?1.2+rand():2+rand()*2;const side=rand()<.5?-1:1;
       if(engaged){const radial=d<8?-5:d>18?6:0;n.target=new T.Vector3(n.g.position.x+dx/d*radial+dz/d*side*5,0,n.g.position.z+dz/d*radial-dx/d*side*5)}
       else{const a=rand()*Math.PI*2;n.target=n.home.clone().add(new T.Vector3(Math.sin(a)*5,0,Math.cos(a)*5))}
-      n.target.x=T.MathUtils.clamp(n.target.x,182,298);n.target.z=T.MathUtils.clamp(n.target.z,-196,-41);
+      n.target.x=T.MathUtils.clamp(n.target.x,arenaBounds?.[0]??182,arenaBounds?.[1]??298);n.target.z=T.MathUtils.clamp(n.target.z,arenaBounds?.[2]??-196,arenaBounds?.[3]??-41);
     }
     if(!engaged&&n.g.position.distanceTo(n.home)>48)n.target.copy(n.home);
-    steer(n,n.target,engaged?(n===hunter?1.25:2.4):1.1,dt,free,bounds);if(engaged)n.heading=Math.atan2(dx,dz);n.update();
+    steer(n,n.target,engaged?(n===hunter?1.25:2.4):1.1,dt,free,arenaBounds?((x,z)=>x>arenaBounds[0]&&x<arenaBounds[1]&&z>arenaBounds[2]&&z<arenaBounds[3]):bounds);if(engaged)n.heading=Math.atan2(dx,dz);n.update();
   }
   function spawnShot({position,velocity,damage=14,arrow=false,large=false,falling=false,delay=0,age=0}){
     const m=new T.Mesh(arrow?new T.CylinderGeometry(.012,.012,.55,5):new T.SphereGeometry(falling?.45:large?.28:.12,10,8),new T.MeshBasicMaterial({color:arrow?0xb8a47d:large?0x73ff2f:0xff732c}));m.position.fromArray(position);m.visible=delay<=0;scene.add(m);shots.push({m,v:new T.Vector3().fromArray(velocity),damage,arrow,large,falling,delay,age});
@@ -27,11 +27,11 @@ export function bossCombat({scene,camera,hunter,witch,free,rand}){
   function dispose(n){scene.remove(n);n.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}})}
   function clear(){witchEngaged=false;hunter.aggro=null;witch.aggro=null;for(const b of shots)dispose(b.m);shots.length=0;for(const p of pools)dispose(p.g);pools.length=0}
   function tick(dt,onDamage,onSound=()=>{}){time+=dt;const frameDt=dt;
-    if(hunter.g.visible&&hunter.hp>0){const dt=statusStep(hunter,frameDt);const d=camera.position.distanceTo(hunter.g.position),engaged=d<22||!!hunter.aggro;move(hunter,engaged,dt);hunter.cooldown=Math.max(0,hunter.cooldown-dt);
+    if(hunter.g.visible&&hunter.hp>0){const dt=statusStep(hunter,frameDt);const d=camera.position.distanceTo(hunter.g.position),engaged=canSense(hunter,camera,d,hunter.aggro?Infinity:22);move(hunter,engaged,dt);hunter.cooldown=Math.max(0,hunter.cooldown-dt);
       if(engaged){for(const a of hunter.g.userData.arms||[])a.rotation.x=-1.15;const attr=hunter.g.userData.string?.geometry.attributes.position;if(attr){attr.setXYZ(1,0,0,-.18*Math.min(1,1-hunter.cooldown/.9));attr.needsUpdate=true}
         if((dt>0||frameDt===0&&!hunter.stun)&&hunter.cooldown===0&&d<80&&sight(hunter)){hunter.cueAttack?.('bow',.85);hunter.cooldown=1.5;const special=rand(),fan=special<.15,burst=special>=.15&&special<.30;const angles=fan?[-.13,0,.13]:[0];for(const angle of angles)arrow(angle);if(burst){arrow(0,.47);arrow(0,.72)}}}
     }
-    if(witch.g.visible&&witch.hp>0){const dt=statusStep(witch,frameDt);const d=camera.position.distanceTo(witch.g.position),engaged=d<80||!!witch.aggro;if(engaged&&!witchEngaged){onSound('witch-laugh');laughReady=time+12+rand()*10}witchEngaged=engaged;if(engaged&&time>=laughReady){onSound('witch-laugh');laughReady=time+12+rand()*10}move(witch,engaged,dt);witch.cooldown=Math.max(0,witch.cooldown-dt);
+    if(witch.g.visible&&witch.hp>0){const dt=statusStep(witch,frameDt);const d=camera.position.distanceTo(witch.g.position),engaged=canSense(witch,camera,d,witch.aggro?Infinity:80);if(engaged&&!witchEngaged){onSound('witch-laugh');laughReady=time+12+rand()*10}witchEngaged=engaged;if(engaged&&time>=laughReady){onSound('witch-laugh');laughReady=time+12+rand()*10}move(witch,engaged,dt);witch.cooldown=Math.max(0,witch.cooldown-dt);
       if(!healUsed&&witch.hp<60){healUsed=true;healLeft=10}if(healLeft>0){const step=Math.min(dt,healLeft);witch.hp=Math.min(200,witch.hp+5*step);healLeft-=step}aura.visible=healLeft>0;aura.rotation.y=time*2;aura.scale.setScalar(1+Math.sin(time*5)*.12);
       if((dt>0||frameDt===0&&!witch.stun)&&engaged&&witch.cooldown===0&&d<100&&sight(witch)){witch.cueAttack?.('magic',.9);witch.cooldown=1.8+rand()*.6;if(rand()<.35&&time>=poolReady){poolReady=time+10;laughReady=Math.max(laughReady,time+7);onSound('witch-pool');spawnShot({position:[camera.position.x,9,camera.position.z],velocity:[0,-12,0],falling:true,damage:0,delay:.45})}
         else{const large=rand()<.15,pos=witch.g.position.clone().add(new T.Vector3(0,1.4,0)),v=camera.position.clone().sub(pos).normalize().multiplyScalar(large?19:25);spawnShot({position:pos.toArray(),velocity:v.toArray(),large,damage:large?25:15,delay:.45})}}

@@ -7,3 +7,5 @@ export function scaledDamage(base,level){return base*(1+.05*(level-1))}
 export function criticalDamage(amount,roll=Math.random(),chance=.1){return amount*(roll<chance?2:1)}
 export function blockHit(amount,type,v,guard,improved=false){if(type==='hazard'||!guard.held||guard.broken)return amount;const enough=v.stamina>=15,reduction=enough?(type==='magic'?(improved?.40:.33):(improved?.70:.6)):Math.min(v.stamina/100,1);v.stamina=Math.max(0,v.stamina-15);if(!enough)guard.broken=true;return amount*(1-reduction)}
 export function statusStep(n,dt){const stunned=Math.min(dt,n.stun||0);n.stun=Math.max(0,(n.stun||0)-dt);const available=dt-stunned,slowed=Math.min(available,Math.max(0,(n.slow||0)-stunned));n.slow=Math.max(0,(n.slow||0)-dt);return available-slowed*.5}
+
+export function canSense(n,camera,distance,radius){const hiddenDistance=n.g?.position?Math.hypot(camera.position.x-n.g.position.x,camera.position.z-n.g.position.z):distance;if(camera.userData?.invisible&&hiddenDistance>.5){n.aggro=null;n.attackWindup=0;if(n.mode==='attack')n.mode='return';return false}return (camera.userData?.invisible?hiddenDistance:distance)<radius}
