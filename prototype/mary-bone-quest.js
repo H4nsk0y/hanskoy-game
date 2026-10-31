@@ -1,0 +1,10 @@
+import {countItem,removeItem} from './inventory.js';
+export function maryBoneQuest({p,slots,world,bags=()=>[],stored=()=>[],show,close,sync,sound,reward}){
+ const available=()=>p.rewards.includes('bones-quest')||p.stage==='bones_return';
+ const owned=()=>countItem(slots,'great_bone')+countItem(stored(),'great_bone')+bags().reduce((n,b)=>n+(b.items||[]).reduce((s,i)=>s+(i?.id==='great_bone'?i.count:0),0),0);
+ function tick(){if(p.maryBoneQuest==='hunt'&&countItem(slots,'great_bone'))p.maryBoneQuest='return';world?.setBoneQuest?.(['hunt','return'].includes(p.maryBoneQuest));if(['hunt','return'].includes(p.maryBoneQuest)&&world?.boneKeeperDead&&owned()===0)world.ensureGreatBone()}
+ function marker(){return p.maryBoneQuest==='return'&&countItem(slots,'great_bone')?'?':p.maryBoneQuest==='idle'&&available()?'!':''}
+ function objective(){return p.maryBoneQuest==='hunt'?'Кость для Мэри\nПобедите Хранителя костей в дальнем правом углу кладбища':p.maryBoneQuest==='return'?'Кость для Мэри\nОтнесите большую кость Мэри':''}
+ function talk(){if(p.maryBoneQuest==='idle'&&available()){show('Мэри','Джон сказал, что ты уже разобрался с костями. Мне нужна одна особенная — у Хранителя костей в дальнем правом углу кладбища. По ней я смогу делать косточки возвращения. Поможешь? Это дело может подождать, если ты занят.',[['Я принесу её',()=>{p.maryBoneQuest='hunt';sound();sync();show('Мэри','Ищи скелета в синей короне. Он владеет холодом — не стой под его заклинаниями.')}],['Не сейчас',close]]);return true}if(p.maryBoneQuest==='return'){if(!removeItem(slots,'great_bone')){show('Мэри','Принеси большую кость. Если она осталась в мешке после гибели, забери её.');return true}p.maryBoneQuest='done';reward(p,'mary-bone-quest','quest',40);sound();sync();show('Мэри','Вот она! Теперь я смогу готовить косточки возвращения. Загляни в магазин: одна такая косточка вернёт тебя к последней контрольной точке.');return true}if(p.maryBoneQuest==='hunt'){show('Мэри','Хранитель костей бродит в дальнем правом углу кладбища. Принеси его большую кость, и в моей лавке появятся косточки возвращения.');return true}return false}
+ return {tick,marker,objective,talk};
+}

@@ -34,3 +34,5 @@ const fatal=fixture('mage');fatal.c.onDamage(1000,'magic','witch');fatal.c.onDam
 console.log('PASS player attack/skill sound routing, no dry fire, witch-only lethal cue once');
 
 const higherRank=fixture('sword');higherRank.learn();higherRank.learn();higherRank.key('Digit1');assert.equal(higherRank.wolf.hp,17,'second rank really adds 20 percent damage');
+
+const torchMage=fixture('mage');torchMage.c.slots[1]={id:'torch',count:1};torchMage.vitals.mana=10;torchMage.step(1);assert(torchMage.vitals.mana>15,'offhand torch accelerates mana regeneration');torchMage.mouse(0);assert.equal(torchMage.c.snapshot().bullets.length,1,'offhand torch permits casting');assert.equal(torchMage.c.snapshot().slots[1].id,'torch');console.log('PASS offhand torch regeneration and normal mage attack');
