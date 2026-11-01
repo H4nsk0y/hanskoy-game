@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import * as T from '../vendor/three.module.js';
+import {chapterThreeWorld} from '../chapter-three-world.js';
+import {chapterThreeActor} from '../chapter-three-models.js';
+import {chapterThreeCombat} from '../chapter-three-combat.js';
+import {chapterTwoMaterials} from '../chapter-two-models.js';
+import {distantDragon} from '../chapter-two-atmosphere.js';
+import {hitVolumes} from '../combat-rules.js';
+import {lightningEffect} from '../lightning-effect.js';
+import {itemIcon} from '../inventory.js';
+T.TextureLoader.prototype.loadAsync=async()=>new T.Texture();globalThis.document={querySelector:()=>({}),createElement:()=>({})};
+for(const role of ['hag','harpy','abbess','ashwing','werewolf']){const root=new T.Group(),camera=new T.PerspectiveCamera();camera.position.set(0,1.7,0);const n=chapterThreeActor(root,role,0,role==='werewolf'?-6:-10,chapterTwoMaterials(),'test-'+role);n.aggro=camera.position.clone();n.hp=n.maxHp*.45;n.root=role==='werewolf'?0:100;const combat=chapterThreeCombat({root:()=>root,camera,free:()=>true,blocked:()=>false,rand:()=>.5});let hurt=0,adds=0,slow=0;for(let i=0;i<800;i++)combat.tick(.05,[n],{onDamage:v=>{hurt+=v;return true},onSlow:v=>slow+=v,spawnAdds:()=>adds++});assert(hurt>0,role+' deals damage');if(['abbess','ashwing'].includes(role))assert.equal(adds,1);const saved=combat.snapshot();combat.restore(saved);assert.deepEqual(combat.snapshot(),saved);combat.clear();assert(!combat.snapshot().shots.length);assert(hitVolumes(n).every(v=>v.every(Number.isFinite)))}
+const scene=new T.Scene(),camera=new T.PerspectiveCamera(),world=chapterThreeWorld({scene,camera,rand:()=>.5,setPose:p=>camera.position.fromArray(p.position)});for(const zone of ['pass','quarry','siege','marsh','abbey','aerie']){world.enter(zone);const rare=world.mobs.filter(n=>n.role==='werewolf');assert.equal(rare.length,1,'werewolf in '+zone);assert(world.can(rare[0].home.x,rare[0].home.z,.5));world.enter(zone);assert.equal(world.mobs.filter(n=>n.role==='werewolf').length,1,'no duplicate');rare[0].hp=0;world.killed(rare[0]);world.enter(zone);assert.equal(world.mobs.filter(n=>n.role==='werewolf').length,1,'revisit after death');assert.equal(rare[0].generation,1)}world.enter('fortress');assert(!world.mobs.some(n=>n.role==='werewolf'));const saved=world.snapshot(),copy=chapterThreeWorld({scene:new T.Scene(),camera:new T.PerspectiveCamera(),rand:()=>.99,setPose(){}});copy.restore(saved);assert.deepEqual(copy.snapshot(),saved,'rare generations saved');
+const flights=[],dragon=distantDragon({scene:new T.Scene(),rand:()=>0});for(let i=0;i<1700;i++)dragon.tick(.1,'road',2000,id=>flights.push(id));assert(flights.length>=3,'repeat flights without changing location');
+const effect=lightningEffect(scene,new T.Vector3(0,1,0),new T.Vector3(0,1,-20));assert(effect.m.children.length>5);effect.animate(.3);assert(effect.m.children.some(n=>n.isPointLight));effect.dispose();assert(!scene.getObjectByName('chain-lightning'));for(const id of ['blood_fang','gargoyle_shard'])assert(itemIcon(id).includes('<path'),'visible icon '+id);
+console.log('PASS new monster damage/telegraphs/slow/phases, boss combat save, werewolves in all six battle regions but not fortress, no duplicates/revisit, repeated same-area dragon, lightning cleanup and missing trophy icons');

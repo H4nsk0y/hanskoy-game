@@ -1,0 +1,9 @@
+import * as T from './vendor/three.module.js';
+export function lightningEffect(scene,from,to){
+ const g=new T.Group();g.name='chain-lightning';scene.add(g);const delta=to.clone().sub(from),length=delta.length(),dir=delta.clone().normalize(),side=new T.Vector3(0,1,0).cross(dir).normalize();if(side.lengthSq()<.01)side.set(1,0,0);const up=dir.clone().cross(side).normalize(),segments=Math.max(5,Math.ceil(length*1.2)),points=[];
+ for(let i=0;i<=segments;i++){const t=i/segments,spread=Math.sin(t*Math.PI)*.22;points.push(from.clone().addScaledVector(delta,t).addScaledVector(side,Math.sin(i*7.3)*spread).addScaledVector(up,Math.cos(i*4.7)*spread))}
+ function arc(path,r,color,opacity){const curve=new T.CatmullRomCurve3(path),m=new T.Mesh(new T.TubeGeometry(curve,path.length*2,r,5,false),new T.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,blending:T.AdditiveBlending}));g.add(m)}
+ arc(points,.045,0xecffff,1);arc(points,.12,0x469dff,.4);for(let i=2;i<points.length-2;i+=4){const start=points[i],end=start.clone().addScaledVector(side,(i%2?1:-1)*.7).addScaledVector(up,.35);arc([start,start.clone().lerp(end,.45).addScaledVector(dir,.2),end],.025,0x9aeaff,.8)}
+ const burst=new T.Mesh(new T.IcosahedronGeometry(.26,1),new T.MeshBasicMaterial({color:0xc6f8ff,transparent:true,opacity:1,depthWrite:false}));burst.position.copy(to);g.add(burst);const light=new T.PointLight(0x7edfff,24,7,2);light.position.copy(to);g.add(light);
+ return {m:g,left:.65,animate(left){const fade=Math.max(0,left/.65),flicker=.65+.35*Math.abs(Math.sin(left*65));g.traverse(n=>{if(n.isMesh)n.material.opacity=fade*flicker*(n.geometry.type==='TubeGeometry'&&n.geometry.parameters.radius>.1?.4:1)});burst.scale.setScalar(1+(1-fade)*2);light.intensity=24*fade},dispose(){g.removeFromParent();g.traverse(n=>{n.geometry?.dispose();n.material?.dispose()})}};
+}

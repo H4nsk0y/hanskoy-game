@@ -1,0 +1,10 @@
+// Action-bound voices supplement the player's existing monster recordings.
+export function enemyAudio({camera,sound}){
+ const states=new WeakMap();let time=0,lastVoice=-10;
+ const family=n=>n.species?.startsWith('skeleton')||n.species==='lich'?'undead':['sword','crossbow','warden','hunter','soldier','marksman','captain','knight','baron','cultist','crossbow','vampire','drowned'].includes(n.role||n.species)?'human':['mage','abbess','witch','ghost','hag','cantor','harpy'].includes(n.role||n.species)?'caster':'beast';
+ function audible(n){return n.g?.visible!==false&&Math.hypot(n.g.position.x-camera.position.x,n.g.position.z-camera.position.z)<55}
+ function emit(n,id,state,force=false){if(!audible(n)||!force&&(time-state.last<1.35||time-lastVoice<.14))return;const distance=Math.hypot(n.g.position.x-camera.position.x,n.g.position.z-camera.position.z);sound(id,{volume:Math.max(.08,1-distance/55)});state.last=time;lastVoice=time}
+ function stateFor(n){let state=states.get(n);if(!state){state={aggro:false,cooldown:n.cooldown||0,last:-10};states.set(n,state);if(n.cueAttack){const original=n.cueAttack;n.cueAttack=function(...args){emit(n,family(n)==='caster'?'enemy-cast':family(n)==='undead'?'enemy-undead':family(n)==='human'?'enemy-human':'enemy-beast',state);return original.apply(this,args)}}}return state}
+ const eligible=n=>n&&n.g&&!['hare','raven','dark-self','training-ogre'].includes(n.species);
+ return {tick(dt,mobs){time+=dt;for(const n of mobs){if(!eligible(n)||n.hp<=0)continue;const state=stateFor(n),aggro=!!n.aggro||n.mode==='attack';if(aggro&&!state.aggro)emit(n,family(n)==='human'?'enemy-human':family(n)==='caster'?'enemy-undead':'enemy-growl',state);if(aggro&&(n.cooldown||0)>state.cooldown+.3)emit(n,family(n)==='caster'?'enemy-cast':family(n)==='undead'?'enemy-undead':family(n)==='human'?'enemy-human':'enemy-beast',state);state.aggro=aggro;state.cooldown=n.cooldown||0}},hit(n,lethal){if(!eligible(n))return;const state=stateFor(n);emit(n,lethal?'enemy-death':'enemy-hurt',state,lethal)}};
+}

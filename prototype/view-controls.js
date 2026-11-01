@@ -1,1 +1,4 @@
 export function updateZoom(camera,held,dt){const target=held?36:72,next=camera.fov+(target-camera.fov)*(1-Math.exp(-Math.max(0,dt)*14));const fov=Math.abs(next-target)<.02?target:next;if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix()}camera.userData.handScale=Math.tan(fov*Math.PI/360)/Math.tan(72*Math.PI/360);return fov}
+
+// Skill relocation preserves held movement keys; area transitions reset them separately.
+export function relocatePlayer(camera,vitals,position){camera.position.copy(position);vitals.height=vitals.velocity=0}

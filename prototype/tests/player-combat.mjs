@@ -28,8 +28,8 @@ const tome=fixture('mage');tome.c.slots[1]={id:'grimoire',count:1};tome.mouse(0)
 const improved=fixture('sword');improved.c.slots[1]={id:'shield_fine',count:1};improved.learn();improved.key('Digit1');assert.equal(improved.wolf.hp,35-15*1.25);improved.step(1);improved.mouse(2);improved.c.onDamage(10);assert(Math.abs(improved.vitals.hp-97.6)<1e-9);
 console.log('PASS H all classes, stationary archer crit, quiver probability boundary, faster magic, persistent third-cast grimoire, improved shield');
 
-for(const [id,sound] of [['sword','sword'],['bow','bow'],['mage','fireball']]){const f=fixture(id);f.mouse(0);assert.deepEqual(f.sounds,[sound]);f.mouse(0);assert.equal(f.sounds.length,1,'cooldown has no sound');}
-for(const [id,sound] of [['bow','volley'],['mage','ice']]){const f=fixture(id);f.learn();f.key('Digit1');assert.deepEqual(f.sounds,[sound]);}
+for(const [id,sound] of [['sword','sword'],['bow','bow'],['mage','fireball']]){const f=fixture(id);f.mouse(0);assert.deepEqual(f.sounds.filter(s=>!s.startsWith('enemy-')),[sound]);f.mouse(0);assert.equal(f.sounds.filter(s=>!s.startsWith('enemy-')).length,1,'cooldown has no sound');}
+for(const [id,sound] of [['bow','volley'],['mage','ice']]){const f=fixture(id);f.learn();f.key('Digit1');assert.deepEqual(f.sounds.filter(s=>!s.startsWith('enemy-')),[sound]);}
 const fatal=fixture('mage');fatal.c.onDamage(1000,'magic','witch');fatal.c.onDamage(1000,'hazard','witch');assert.deepEqual(fatal.sounds,['witch-kill'],'only once for lethal witch damage');const other=fixture('mage');other.c.onDamage(1000,'physical','troll');assert.deepEqual(other.sounds,[]);const dry=fixture('mage');dry.vitals.mana=0;dry.mouse(0);assert.deepEqual(dry.sounds,[]);
 console.log('PASS player attack/skill sound routing, no dry fire, witch-only lethal cue once');
 
