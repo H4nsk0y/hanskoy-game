@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {locationMusic,musicTrack,MUSIC_TRACKS} from '../location-music.js';
-for(const [zone,expected] of Object.entries({forest:'standard',deep:'standard',cemetery:'cemetery',c2_city:'city',c3_fortress:'order',dungeon:'dungeons',lich:'dungeons',admin:'dungeons',trial:'dungeons',c3_quarry:'dungeons',c3_aerie:'dragon',c3_marsh:'standard'}))assert.equal(musicTrack(zone),expected);
+for(const [zone,expected] of Object.entries({forest:'standard',deep:'standard',cemetery:'cemetery',c2_city:'standard',c3_fortress:'order',dungeon:'dungeons',lich:'dungeons',admin:'dungeons',trial:'dungeons',c3_quarry:'dungeons',c3_aerie:'dragon',c3_marsh:'standard'}))assert.equal(musicTrack(zone),expected);
 assert.equal(musicTrack('c2_inn',{dungeon:true}),'dungeons');
 for(const file of Object.values(MUSIC_TRACKS))assert((await stat(new URL('../assets/'+file,import.meta.url))).size>1000);
 const voices=[],makeAudio=url=>{const a={url,paused:true,plays:0,play(){this.paused=false;this.plays++;return Promise.resolve()},pause(){this.paused=true},removeAttribute(){this.released=true},load(){}};voices.push(a);return a};

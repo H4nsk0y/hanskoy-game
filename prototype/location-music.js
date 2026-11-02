@@ -4,7 +4,7 @@ export function musicTrack(zone,{dungeon=false}={}){
  if(dungeon||['dungeon','lich','admin','trial','c3_quarry'].includes(zone))return 'dungeons';
  if(zone==='cemetery')return 'cemetery';
  if(zone==='c3_fortress')return 'order';
- if(zone==='c2_city')return 'city';
+ if(zone==='c2_city')return 'standard';
  return 'standard';
 }
 // Only the current track and, briefly, its fading predecessor are loaded.
