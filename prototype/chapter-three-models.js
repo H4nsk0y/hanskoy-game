@@ -1,9 +1,11 @@
+import {C5_STATS} from './chapter-five-data.js';
+import {chapterFiveActor} from './chapter-five-models.js';
 import {chapterFourActor,C4_STATS} from './chapter-four-models.js';
 import * as T from './vendor/three.module.js';
 import {citizenModel} from './chapter-two-models.js';
 import {beastModel} from './chapter-two-wildlife.js';
-export const C3_STATS={...C4_STATS,soldier:{hp:180,damage:24,level:17},marksman:{hp:155,damage:22,level:18},cantor:{hp:165,damage:20,level:18},hound:{hp:190,damage:25,level:18},gargoyle:{hp:230,damage:26,level:19},knight:{hp:310,damage:29,level:20},captain:{hp:420,damage:25,level:20},baron:{hp:1350,damage:32,level:23}};
-export function chapterThreeActor(parent,role,x,z,palette,id){if(C4_STATS[role])return chapterFourActor(parent,role,x,z,palette,id);
+export const C3_STATS={...C5_STATS,...C4_STATS,soldier:{hp:180,damage:24,level:17},marksman:{hp:155,damage:22,level:18},cantor:{hp:165,damage:20,level:18},hound:{hp:190,damage:25,level:18},gargoyle:{hp:230,damage:26,level:19},knight:{hp:310,damage:29,level:20},captain:{hp:420,damage:25,level:20},baron:{hp:1350,damage:32,level:23}};
+export function chapterThreeActor(parent,role,x,z,palette,id){if(C5_STATS[role])return chapterFiveActor(parent,role,x,z,palette,id);if(C4_STATS[role])return chapterFourActor(parent,role,x,z,palette,id);
  const base=role==='hound'?beastModel(parent,'wolf',x,z):citizenModel(parent,x,z,{id,role:['marksman','captain'].includes(role)?'crossbow':role==='cantor'?'mage':role==='baron'?'vampire':'sword',cloth:role==='baron'?4:role==='cantor'?10:7,skin:role==='baron'?1:0,scale:role==='baron'?1.3:role==='knight'?1.13:1},palette);
  const g=base.g;g.userData.dynamic=true;const metal=palette.material(8,0x8b9aa8),stone=palette.material(15,0x768593),blood=new T.MeshBasicMaterial({color:0xcc315a});const add=(geo,mat,x,y,z)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m};let wings=[],shield;
  if(['knight','captain','baron'].includes(role)){add(new T.SphereGeometry(.23,10,8),metal,0,1.9,0).scale.set(1,.65,1);for(const side of [-1,1])add(new T.SphereGeometry(.2,10,8),metal,side*.32,1.45,0);shield=add(new T.CylinderGeometry(.37,.37,.1,8),metal,-.49,1.16,.15);shield.rotation.x=Math.PI/2;add(new T.BoxGeometry(.11,.6,.12),palette.material(4),-.49,1.16,.23)}

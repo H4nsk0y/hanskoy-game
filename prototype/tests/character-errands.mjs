@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {chapterFiveErrands} from '../chapter-five-errands.js';
+import {npcDialogue} from '../npc-personality.js';
+import {createProgress,reward} from '../progress.js';
+import {createInventory,addItem,countItem} from '../inventory.js';
+const p=createProgress(),slots=createInventory();let last;
+const show=(name,text,choices=[])=>last={name,text,choices},h={p,slots,show,close(){},sync(){},sound(){},reward},q=chapterFiveErrands(h);
+const n=id=>({id:'c3-c5-'+id,name:id}),choose=label=>{const c=last.choices.find(([text])=>text===label);assert(c,label);c[1]()},option=(id,label)=>{const c=q.choices(n(id)).find(([text])=>text===label);assert(c,label);c[1]()};
+option('caravan','Есть ещё какая-нибудь работа?');choose('Помогу');assert(q.objective().includes('Забытая ось'));q.interact({type:'c5-axle'});option('caravan','Вернуть найденную ось');assert.equal(p.gold,35);assert(!q.choices(n('caravan')).length);
+option('smith','Почему во дворе погасли фонари?');choose('Помогу');q.interact({type:'c5-lamp-0'});assert(last.text.includes('Нужно'));addItem(slots,'golem_core',2);q.interact({type:'c5-lamp-0'});q.interact({type:'c5-lamp-0'});assert.equal(countItem(slots,'golem_core'),1,'repair cannot consume twice');q.interact({type:'c5-lamp-1'});option('smith','Оба фонаря починены');assert.equal(countItem(slots,'greater_healing'),1);
+option('witness','Кому ты откладываешь этот обед?');choose('Помогу');option('hermit','Нара передала горячий обед');option('witness','Вед получил обед');assert.equal(countItem(slots,'hunter_stew'),1);
+option('healer','Тебе нужны травы?');choose('Помогу');for(let i=0;i<3;i++)q.interact({type:'c5-herb-'+i});option('healer','Передать три образца первоцвета');assert.equal(countItem(slots,'mana_potion'),2);assert.equal(p.gold,215);assert.equal(q.objective(),'');assert.equal(q.marker('c3-c5-smith'),null);const restored=chapterFiveErrands({...h,p:JSON.parse(JSON.stringify(p))});assert.equal(restored.objective(),'');assert(!restored.choices(n('healer')).length);
+const stranger=n('caravan');stranger.name='Обозница Борга';npcDialogue(p,stranger,show)(stranger.name,'Семь возов вывела.');assert(last.text.startsWith('Эй, путник!'));assert(last.text.includes('Семь возов'));choose('Давай немного поговорим');assert(last.text.includes('Тридцать лет'));npcDialogue(p,stranger,show)(stranger.name,'Снова здравствуй.');assert.equal(last.text,'Снова здравствуй.');assert(p.rewards.includes('met:c3-c5-caravan'));
+console.log('PASS four optional errands, objectives, one-time materials/rewards, items, save persistence and first/repeat NPC introductions with personal conversation');

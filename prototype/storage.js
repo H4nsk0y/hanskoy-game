@@ -1,6 +1,7 @@
 import {isBagSlot,addItem,itemLimit,countItem,inventoryError} from './inventory.js';
 export function transferStack(source,index,target,start=0){
   const item=source[index];if(!item)return false;
+  if(start===6){const amount=Math.min(item.count,Math.max(0,itemLimit(item.id)-countItem(target,item.id)));if(!amount||!addItem(target,item.id,amount))return false;item.count-=amount;if(!item.count)source[index]=null;return true;}
   const same=target.findIndex((s,i)=>i>=start&&(start===6?isBagSlot(i):i<18)&&s?.id===item.id),empty=target.findIndex((s,i)=>i>=start&&(start===6?isBagSlot(i):i<18)&&!s),to=same>=0?same:empty;
   if(to<0)return false;
   if(target[to])target[to].count+=item.count;else target[to]={...item};source[index]=null;return true;

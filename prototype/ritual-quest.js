@@ -1,3 +1,4 @@
+export const hutUnlocked=p=>p.rewards.includes('bones-quest')||['page_search','page_return','trial_ready','trial_return','ritual_done'].includes(p.stage);
 import {addItem,countItem,removeItem} from './inventory.js';
 import {maximum} from './player-stats.js';
 

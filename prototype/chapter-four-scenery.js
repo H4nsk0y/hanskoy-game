@@ -1,3 +1,4 @@
+import {waygate} from './waygate.js';
 import {nightSky} from './night-sky.js';
 import * as T from './vendor/three.module.js';
 export const C4_REGIONS={marsh:{x:5200,w:260,h:330,name:'Чёрные заводи',entry:[5200,1.7,-26]},abbey:{x:5600,w:250,h:300,name:'Аббатство Пепельной Луны',entry:[5600,1.7,-26]},aerie:{x:6000,w:220,h:230,name:'Гнездо Пеплокрыла',entry:[6000,1.7,-26]}};
@@ -5,7 +6,7 @@ export const C4_ISLANDS=[[0,-45,29],[0,-105,33],[-48,-115,26],[48,-170,29],[0,-1
 export function c4Land(zone,x,z,r=.35){if(zone!=='marsh')return true;const px=x-5200;return [[-r,-r],[r,-r],[-r,r],[r,r]].every(([dx,dz])=>C4_ISLANDS.some(([a,b,c])=>Math.hypot(px+dx-a,z+dz-b)<c)||Math.abs(px+dx)<7&&z+dz< -20&&z+dz> -303||Math.abs(z+dz+115)<4&&px+dx> -48&&px+dx<0||Math.abs(z+dz+170)<4&&px+dx>0&&px+dx<48||Math.abs(z+dz+235)<4&&px+dx> -46&&px+dx<0)}
 let horizon;
 export function buildChapterFour(a){const {root,zone,palette,mesh,box,wall,enemy,npc,fire,chest,point,torch}=a,{x,w,h}=C4_REGIONS[zone],stone=palette.material(13,0x738a9a,{tile:3}),wood=palette.material(12,0x686c65,{tile:2}),rock=palette.material(15,0x496267,{tile:3}),iron=palette.material(8,0x718896),violet=new T.MeshBasicMaterial({color:0xa373ff}),warm=new T.MeshBasicMaterial({color:0xffc283});
- function gate(xx,z){for(const side of [-1,1])box(root,xx+side*3,2.7,z,.7,5.4,.8,stone);box(root,xx,5.4,z,6.8,.5,.8,stone);mesh(root,new T.TorusGeometry(1.8,.045,7,48),violet,xx,2.1,z)}
+ function gate(xx,z,name='waygate'){return waygate(root,xx,z,name)}
  function floor(xx,z,ww,dd,material=stone,elevation=.025){const geo=new T.PlaneGeometry(ww,dd),uv=geo.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*ww/4,uv.getY(i)*dd/4);const m=mesh(root,geo,material,xx,elevation,z);m.rotation.x=-Math.PI/2}
  function beam(xx,z,ww,dd,hh=6){box(root,xx,hh/2,z,ww,hh,dd,stone);wall(xx,z,ww,dd,hh)}
  function hut(xx,z,ww=11,dd=12){for(const side of [-1,1]){box(root,xx+side*ww/2,2.5,z,.3,5,dd,wood);wall(xx+side*ww/2,z,.3,dd,5);box(root,xx+side*(ww/4+1),2.5,z+dd/2,ww/2-2,5,.3,wood);wall(xx+side*(ww/4+1),z+dd/2,ww/2-2,.3,5)}box(root,xx,2.5,z-dd/2,ww,5,.3,wood);wall(xx,z-dd/2,ww,.3,5);box(root,xx,4.6,z+dd/2,4,.8,.3,wood);box(root,xx,5.1,z,ww+1,.3,dd+1,wood);floor(xx,z,ww,dd,wood);box(root,xx+ww/2+.04,2.8,z, .1,1.3,1.5,warm)}

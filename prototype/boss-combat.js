@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {statusStep,canSense} from './combat-rules.js';
+import {MAGIC_PROJECTILE_RANGE,clipMagicProjectile,statusStep,canSense} from './combat-rules.js';
 import {steer} from './navigation.js';
 export const CURSED_FIRE={x:280,z:-177,radius:8};
 export const ARROW_SPEED=30;
@@ -36,11 +36,11 @@ export function bossCombat({scene,camera,hunter,witch,free,rand,arenaBounds=null
       clawWindup=Math.max(0,clawWindup-dt);if(witch.pendingClaw&&!clawWindup){witch.pendingClaw=false;if(Math.hypot(camera.position.x-witch.g.position.x,camera.position.z-witch.g.position.z)<3.6&&sight(witch))onDamage(20,'physical','witch')}if(dt>0&&engaged&&witch.cooldown===0&&Math.hypot(camera.position.x-witch.g.position.x,camera.position.z-witch.g.position.z)<3.6){witch.cooldown=1.6;clawWindup=.35;witch.pendingClaw=true;witch.cueAttack?.('claw',.55);onSound('enemy-beast')}if((dt>0||frameDt===0&&!witch.stun)&&engaged&&witch.cooldown===0&&d<100&&sight(witch)){witch.cueAttack?.('magic',.9);witch.cooldown=1.8+rand()*.6;if(rand()<.35&&time>=poolReady){poolReady=time+10;laughReady=Math.max(laughReady,time+7);onSound('witch-pool');spawnShot({position:[camera.position.x,9,camera.position.z],velocity:[0,-12,0],falling:true,damage:0,delay:.45})}
         else{const large=rand()<.15,pos=witch.g.position.clone().add(new T.Vector3(0,1.4,0)),v=camera.position.clone().sub(pos).normalize().multiplyScalar(large?19:25);spawnShot({position:pos.toArray(),velocity:v.toArray(),large,damage:large?25:15,delay:.45})}}
     }else{witchEngaged=false,clawWindup=0;aura.visible=false;healLeft=0}
-    for(let i=shots.length-1;i>=0;i--){const b=shots[i];if(b.arrow&&hunter.hp<=0){dispose(b.m);shots.splice(i,1);continue}if(b.delay>0){if(b.arrow&&hunter.stun>0)continue;b.delay-=dt;if(b.delay>0)continue;b.m.visible=true}const old=b.m.position.clone();if(b.arrow)b.v.y-=9.8*dt;b.m.position.addScaledVector(b.v,dt);b.m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),b.v.clone().normalize());b.age+=dt;
+    for(let i=shots.length-1;i>=0;i--){const b=shots[i];if(b.arrow&&hunter.hp<=0){dispose(b.m);shots.splice(i,1);continue}if(b.delay>0){if(b.arrow&&hunter.stun>0)continue;b.delay-=dt;if(b.delay>0)continue;b.m.visible=true}const old=b.m.position.clone();if(b.arrow)b.v.y-=9.8*dt;b.m.position.addScaledVector(b.v,dt);b.m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),b.v.clone().normalize());b.age+=dt;const magicExpired=clipMagicProjectile(b,old,dt,Infinity);if(magicExpired&&old.distanceToSquared(b.m.position)<1e-12){dispose(b.m);shots.splice(i,1);continue}
       if(b.falling){if(b.m.position.y<=.05){pool([b.m.position.x,0,b.m.position.z]);dispose(b.m);shots.splice(i,1)}continue}
       const delta=b.m.position.clone().sub(old),steps=Math.max(1,Math.ceil(delta.length()/.15));let remove=b.age>(b.arrow?4:5)||b.m.position.y<0;
       for(let j=1;j<=steps&&!remove;j++){const point=old.clone().addScaledVector(delta,j/steps);if(!free(point.x,point.z,.05)){remove=true;break}if(point.distanceTo(camera.position)<.5){onDamage(b.damage,b.arrow?'physical':'magic',b.arrow?'hunter':'witch',old);remove=true}}
-      if(remove){dispose(b.m);shots.splice(i,1)}
+      if(remove||magicExpired){dispose(b.m);shots.splice(i,1)}
     }
     for(let i=pools.length-1;i>=0;i--){const p=pools[i],step=Math.min(dt,10-p.age);p.age+=dt;p.g.children[0].material.opacity=.5+Math.sin(time*9)*.12;const touching=Math.hypot(camera.position.x-p.g.position.x,camera.position.z-p.g.position.z)<2.4&&camera.position.y<2.7;if(touching){const old=p.exposure;p.exposure+=step;const burning=Math.max(0,p.exposure-.5)-Math.max(0,old-.5);if(burning>0)onDamage(15*burning,'hazard','witch')}else p.exposure=0;if(p.age>=10){dispose(p.g);pools.splice(i,1)}}
   }

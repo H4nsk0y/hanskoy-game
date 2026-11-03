@@ -7,7 +7,7 @@ function run(){const nodes={},events={};globalThis.innerWidth=1280;globalThis.in
 c.p.classId='mage';c.slots[0]={id:'mage',count:1};
 camera.position.set(700,1.7,-100);camera.lookAt(700,3,-140);camera.updateMatrixWorld(true);c.tick(.01);
 assert.equal(nodes['#boss-hud'].hidden,false,'Lich health visible beyond 25 metres before first hit');
-time=2;events.mousedown({button:0,target:{tagName:'CANVAS'}});for(let i=0;i<100;i++){time+=.02;c.tick(.02)}
+camera.position.set(700,1.7,-120);camera.lookAt(700,3,-140);camera.updateMatrixWorld(true);time=2;events.mousedown({button:0,target:{tagName:'CANVAS'}});for(let i=0;i<100;i++){time+=.02;c.tick(.02)}
 assert(dungeon.boss.hp<820,'actual mage projectile aimed at visible Lich torso causes damage');assert(nodes['#boss-title'].textContent.includes(String(Math.ceil(dungeon.boss.hp))));
-console.log('PASS player projectile hits Lich torso at 40 metres and boss HP bar updates');}run();
+console.log('PASS player projectile hits Lich torso within the new 24-metre magic range and boss HP bar updates');}run();
 
