@@ -1,4 +1,4 @@
-export const CLASSES={sword:{name:'Мечник',damage:10.75,cooldown:.65,incoming:.72,regen:1,stamina:1.18},bow:{name:'Лучник',damage:9.5,cooldown:.9,incoming:1,regen:1,stamina:2},mage:{name:'Маг',damage:14,cooldown:.9,incoming:1.1,regen:.5,stamina:1}};
+export const CLASSES={sword:{name:'Мечник',damage:10.75,cooldown:.65,incoming:.72,regen:1,healthRegen:1.2,stamina:1.298},bow:{name:'Лучник',damage:9.5,cooldown:.9,incoming:1,regen:1,stamina:2},mage:{name:'Маг',damage:14,cooldown:.9,incoming:1.1,regen:.5,stamina:1}};
 export const MAX_LEVEL=100;
 export function xpRequired(level){const n=Math.max(0,Math.min(99,Math.floor(level)-1));return level>=MAX_LEVEL?0:250+40*n+3*n*n}
 export function migrateProgress(p,legacy=false){p.level=Math.max(1,Math.min(MAX_LEVEL,Math.floor(p.level)));if(p.level===MAX_LEVEL)p.xp=0;else if(legacy)p.xp=Math.floor(p.xp/250*xpRequired(p.level));p.pendingLevels=Math.max(0,Math.min(p.level-1,p.pendingLevels||0));p.progressionVersion=2;return p}
