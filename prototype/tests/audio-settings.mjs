@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {audioSettings,AUDIO_SETTINGS_KEY} from '../audio-settings.js';
+import {soundEffects} from '../sound-effects.js';
+const elements=[],listeners={};
+const element=()=>{const e={children:[],setAttribute(k,v){this[k]=v},append(...v){this.children.push(...v)},focus(){this.focused=true}};elements.push(e);return e};
+const trigger=element(),body=element(),document={body,querySelector:()=>trigger,createElement:element,addEventListener(k,fn){listeners[k]=fn}};
+let saved=null,changes=[];const storage=()=>({getItem:()=>saved,setItem(k,v){assert.equal(k,AUDIO_SETTINGS_KEY);saved=v}});
+const mix=audioSettings({document,storage,onChange:v=>changes.push(v)});
+assert.deepEqual(mix.values,{effects:1,music:1,master:1});
+trigger.onclick();assert(mix.open);assert.equal(body.children[0].hidden,false);
+const effects=elements.find(e=>e.id==='audio-effects');effects.value='40';effects.oninput();mix.set('music',.8);mix.set('master',.5);
+assert.equal(mix.gain('effects'),.2);assert.equal(mix.gain('music'),.4);assert.equal(effects.value,'40');
+assert.equal(elements.find(e=>e.htmlFor==='audio-effects'&&e.textContent==='40%').textContent,'40%');
+assert.deepEqual(audioSettings({document:null,storage}).values,mix.values,'mix survives restart independently of game saves');
+let stopped=false,prevented=false;listeners.keydown({code:'Escape',preventDefault(){prevented=true},stopImmediatePropagation(){stopped=true}});
+assert(!mix.open&&stopped&&prevented&&trigger.focused);
+assert.deepEqual(audioSettings({document:null,storage:()=>{throw Error('blocked')}}).values,{effects:1,music:1,master:1});
+saved='broken';assert.equal(audioSettings({document:null,storage}).gain('music'),1);
+const voices=[],fx=soundEffects({makeAudio:()=>({cloneNode(){const a={play(){return Promise.resolve()},pause(){}};voices.push(a);return a}})});
+fx.volume=.5;fx.play('sword');assert.equal(voices[0].volume,.375);fx.volume=.2;assert(Math.abs(voices[0].volume-.15)<1e-9);fx.volume=1;assert.equal(voices[0].volume,.75,'live mixing never compounds previous gain');
+fx.volume=0;fx.play('bell');assert.equal(voices.at(-1).volume,0);fx.stop(true);
+assert(changes.length>=4);
+console.log('PASS audio mixer controls, persistence, master gains, unavailable storage and live sound volumes');
+
