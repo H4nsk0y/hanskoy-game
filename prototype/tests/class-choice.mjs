@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';
+import {classChoiceData,renderClassChoices} from '../class-choice.js';
+import {CLASSES} from '../progress.js';
+import {CLASS_BASES} from '../player-stats.js';
+import {ATTACK_COST} from '../combat-rules.js';
+const infos=['sword','bow','mage'].map(classChoiceData);for(const info of infos){assert.deepEqual(info.rows.map(([key])=>key),infos[0].rows.map(([key])=>key),'each class exposes the same attributes');assert(info.rows[0][1].includes(String(CLASS_BASES[info.id].hp)));assert(info.rows[1][1].includes(String(CLASSES[info.id].damage).replace('.',',')));assert(info.rows[2][1].startsWith(String(ATTACK_COST[info.id])))}assert.deepEqual(infos.map(i=>i.distance),['Ближняя','Дальняя','Средняя']);assert(infos[0].rows[3][1].includes('−28%'));assert(infos[0].rows[3][1].includes('+20%'));assert(infos[2].rows[3][1].includes('+10%'));assert(infos[1].rows[1][1].includes('7,6')&&infos[1].rows[1][1].includes('11,4'));
+const buttons=[],selected=[],document={createElement:()=>({children:[],dataset:{},append(...children){this.children.push(...children)}})};renderClassChoices(document,{append:b=>buttons.push(b)},id=>selected.push(id));assert.equal(buttons.length,3);for(const [i,b] of buttons.entries()){assert.equal(b.className,'class-choice');assert.equal(b.children[0].className,'class-distance');assert(b.children[0].textContent.startsWith('Дистанция: '));assert.equal(b.children.length,7);b.onclick();assert.equal(selected[i],infos[i].id)}
+console.log('PASS comparable class attributes, actual base stats/damage/costs/vulnerabilities, distance labels and three selection callbacks');

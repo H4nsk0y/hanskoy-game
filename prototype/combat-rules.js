@@ -1,3 +1,4 @@
+export const ATTACK_COST={sword:12,bow:18,mage:10};
 export const NORMAL_ARROW_RANGE=40;
 export const MAGIC_PROJECTILE_RANGE=35;
 import * as T from './vendor/three.module.js';
