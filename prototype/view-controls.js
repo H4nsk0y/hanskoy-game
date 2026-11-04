@@ -4,10 +4,12 @@ export function updateZoom(camera,held,dt){const target=held?36:72,next=camera.f
 // Skill relocation preserves held movement keys; area transitions reset them separately.
 export function relocatePlayer(camera,vitals,position){camera.position.copy(position);vitals.height=vitals.velocity=0}
 
-export const WAKE_DURATION=8.2;
+export const WAKE_DURATION=7.7;
 const ease=(age,start,end)=>{const t=Math.min(1,Math.max(0,(age-start)/(end-start)));return t*t*(3-2*t)};
+// Zero velocity and acceleration at each turn: softer head reversals without pauses.
+const headEase=(age,start,end)=>{const t=Math.min(1,Math.max(0,(age-start)/(end-start)));return t*t*t*(t*(t*6-15)+10)};
 export const canLookAround=camera=>!(camera.userData.wakeRemaining>0);
-export function awakeningPose(remaining){const age=WAKE_DURATION-Math.max(0,remaining),rise=ease(age,.9,2.8),right=ease(age,2.8,3.55),left=ease(age,3.95,5.15),center=ease(age,5.55,6.1),inspect=ease(age,6.1,6.7),finish=ease(age,7.35,WAKE_DURATION);
+export function awakeningPose(remaining){const age=WAKE_DURATION-Math.max(0,remaining),rise=ease(age,.9,2.8),right=headEase(age,2.8,3.6),left=headEase(age,3.6,4.95),center=headEase(age,4.95,5.6),inspect=ease(age,5.6,6.2),finish=ease(age,6.85,WAKE_DURATION);
  return {height:-1.35*(1-rise),pitch:1.12*(1-rise)-.7*inspect*(1-finish),yaw:-.68*right+1.36*left-.68*center,roll:.28*(1-rise),hands:inspect*(1-finish),veil:Math.max(0,1-age/.9)};
 }
 function wakingHands(camera){
