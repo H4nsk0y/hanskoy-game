@@ -16,7 +16,7 @@ export function firstPersonHand({side=1,open=true}={}){
  const hand=new T.Group();hand.name=open?'open-player-hand':'punching-hand';const skin=new T.MeshStandardMaterial({color:0xb89a85,roughness:.9,emissive:0x49372b,emissiveIntensity:.22}),cloth=new T.MeshStandardMaterial({color:0x514d43,roughness:1});
  const add=(geo,material,x,y,z)=>{const mesh=new T.Mesh(geo,material);mesh.position.set(x,y,z);mesh.frustumCulled=false;hand.add(mesh);return mesh};
  const arm=add(new T.CapsuleGeometry(.058,.30,4,8),cloth,0,-.25,.06);arm.rotation.x=-.3;add(new T.CapsuleGeometry(.048,.075,4,8),skin,0,-.035,0);const palm=add(new T.SphereGeometry(1,10,8),skin,0,.045,0);palm.scale.set(.07,.085,open?.028:.05);
- for(let i=0;i<4;i++){const finger=add(new T.CapsuleGeometry(.013,open?.06+(i===1?.025:i===2?.015:0):.035,3,6),skin,(i-1.5)*.033,open?.14+(i===1?.015:0):.095,open?-.006:-.045);finger.rotation.set(open?0:-1.15,0,open?-(i-1.5)*.08:0)}const thumb=add(new T.CapsuleGeometry(.018,.065,3,6),skin,open?side*-.083:side*-.05,open?.025:.025,open?.012:-.055);thumb.rotation.z=open?side*.65:side*1.05;
+ if(open){for(let i=0;i<4;i++){const finger=add(new T.CapsuleGeometry(.013,.06+(i===1?.025:i===2?.015:0),3,6),skin,(i-1.5)*.033,.14+(i===1?.015:0),-.006);finger.rotation.z=-(i-1.5)*.08}const thumb=add(new T.CapsuleGeometry(.018,.065,3,6),skin,side*-.083,.025,.012);thumb.rotation.z=side*.65}else palm.scale.set(.075,.08,.065);
  return hand;
 }
 function wakingHands(camera){
