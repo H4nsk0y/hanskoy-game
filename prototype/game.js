@@ -8,7 +8,7 @@ import {chapterThreeWorld} from './chapter-three-world.js';
 import {chapterWorldRouter} from './chapter-world-router.js';
 import {C3_REGIONS} from './chapter-three-scenery.js';
 import {chapterTwoWorld,C2_REGIONS} from './chapter-two-world.js';
-import {WAKE_DURATION,canLookAround,cameraFeedback,updateZoom,relocatePlayer} from './view-controls.js';
+import {lowHealthOpacity,WAKE_DURATION,canLookAround,cameraFeedback,updateZoom,relocatePlayer} from './view-controls.js';
 import {adminArena} from './admin-arena.js';
 import {floodedChapel} from './flooded-chapel.js';
 import {lichDungeon} from './lich-dungeon.js';
@@ -170,7 +170,7 @@ for(const e of eyes){const dist=camera.position.distanceTo(e.g.position);const b
 for(const a of wisps){a.w.position.y=a.y+Math.sin(elapsed+a.p)*.2;a.w.scale.setScalar(.7+Math.sin(elapsed*1.4+a.p)*.3)}waterTex.offset.x=elapsed*.008;for(let i=0;i<flames.length;i++)flames[i].intensity=(flames[i]===fireLight||flames[i]===forestFireLight?45:24)*(1+Math.sin(elapsed*7+i)*.07);const frame=Math.floor(elapsed*10)%16;fireMap.offset.set((frame%4)/4,1-(Math.floor(frame/4)+1)/4);
 for(const n of [guard,...residents,wolf,...wildlife])if(!(n.stun>0))n.update(camera);if(active)for(const n of [guard,...residents,wolf,...wildlife,...world.mobs,world.hunter,...encounter.mobs])if(n.g.visible)n.animate?.(dt);
 for(const [id,value] of [['hp',vitals.hp],['stamina',vitals.stamina],['mana',vitals.mana]]){document.querySelector('#'+id+' .fill').style.width=(value/maximum(vitals,id)*100)+'%';document.querySelector('#'+id+' span').textContent=Math.round(value)+' / '+Math.round(maximum(vitals,id));}
-homeInterior.visible=home.inside();const zoom=active&&canLookAround(camera)&&vitals.hp>0&&(keys.has('ControlLeft')||keys.has('ControlRight'));updateZoom(camera,zoom,dt);document.querySelector('#zoom-veil').hidden=!zoom;const afraid=chapel.fear>0&&vitals.hp>0;const far=afraid?3:500;if(camera.far!==far){camera.far=far;camera.updateProjectionMatrix()}document.querySelector('#fear-veil').hidden=!afraid;document.querySelector('#fear-label').textContent=afraid?'Страх · '+Math.ceil(chapel.fear)+' с':'';document.querySelector('#wake-veil').style.opacity=String(active?cameraFeedback(camera,dt,elapsed):0);renderer.render(scene,camera);campaign.renderHud(renderer)}update();window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth*.8,innerHeight*.8,false)});
+homeInterior.visible=home.inside();const zoom=active&&canLookAround(camera)&&vitals.hp>0&&(keys.has('ControlLeft')||keys.has('ControlRight'));updateZoom(camera,zoom,dt);document.querySelector('#zoom-veil').hidden=!zoom;const afraid=chapel.fear>0&&vitals.hp>0;const far=afraid?3:500;if(camera.far!==far){camera.far=far;camera.updateProjectionMatrix()}document.querySelector('#fear-veil').hidden=!afraid;document.querySelector('#fear-label').textContent=afraid?'Страх · '+Math.ceil(chapel.fear)+' с':'';document.querySelector('#low-health').style.opacity=String(lowHealthOpacity(vitals.hp,maximum(vitals,'hp')));document.querySelector('#wake-veil').style.opacity=String(active?cameraFeedback(camera,dt,elapsed):0);renderer.render(scene,camera);campaign.renderHud(renderer)}update();window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth*.8,innerHeight*.8,false)});
 
 renderer.domElement.addEventListener('mousedown',()=>dragging=true);document.addEventListener('mouseup',()=>dragging=false);
 

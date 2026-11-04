@@ -32,3 +32,5 @@ export function cameraFeedback(camera,dt,time){
  if(data.wakeHands)data.wakeHands.visible=false;
  if(data.shakeRemaining>0){data.shakeRemaining=Math.max(0,data.shakeRemaining-dt);const strength=Math.min(1,data.shakeRemaining/.12);camera.rotation.x+=Math.sin(time*91)*.019*strength;camera.rotation.z+=Math.sin(time*73)*.025*strength}return 0;
 }
+
+export function lowHealthOpacity(hp,maxHp){if(!(hp>0)||!(maxHp>0)||hp>=maxHp*.2)return 0;return .18+.18*(1-hp/(maxHp*.2))}
