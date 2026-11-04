@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import * as T from '../vendor/three.module.js';
-import {cameraFeedback} from '../view-controls.js';
+import {awakeningPose,canLookAround,cameraFeedback,WAKE_DURATION} from '../view-controls.js';
 import {eatRottenFlesh,drinkAle,healingAmount} from '../player-stats.js';
 import {canEquip,ITEMS} from '../inventory.js';
 import {blockHit} from '../combat-rules.js';
@@ -10,7 +10,7 @@ T.TextureLoader.prototype.loadAsync=async()=>new T.Texture();
 const v={hp:500,maxHp:1000,stamina:0,maxStamina:200,mana:0,maxMana:300};drinkAle(v);assert.equal(v.hp,800);assert.equal(v.stamina,200);assert.equal(v.mana,150);assert.equal(healingAmount(120,v,.5),500);v.hp=1;eatRottenFlesh(v,()=>.99);assert.equal(v.hp,1);eatRottenFlesh(v,()=>0);assert.equal(v.hp,151);
 assert(!canEquip('torch',1,'bow'));assert(canEquip('torch',0,'bow'));assert(canEquip('torch',1,'mage'));assert(STOCK.smith.some(o=>o.id==='shield_fine'));const stamina={stamina:100,maxStamina:100};assert.equal(blockHit(30,'physical',stamina,{held:true},true),0);assert.equal(stamina.stamina,80);assert(ITEMS.shield_fine.bonus.staminaRegen>1);
 assert.equal(respawnCheckpoint({deathByLich:true,checkpoint:{zone:'deep'}}).zone,'dungeon');assert.equal(respawnCheckpoint({deathByLich:false,checkpoint:{zone:'deep'}}).zone,'deep');
-const camera=new T.PerspectiveCamera();camera.userData.wakeRemaining=3.6;let lastY=-Infinity;for(let i=0;i<36;i++){camera.position.set(0,1.7,0);camera.rotation.set(0,0,0);cameraFeedback(camera,.1,i*.1);assert(camera.position.y>=lastY-1e-8);lastY=camera.position.y}assert(Math.abs(camera.position.y-1.7)<1e-6);camera.userData.shakeRemaining=.3;for(let i=0;i<40;i++){camera.rotation.set(0,0,0);cameraFeedback(camera,.01,i*.01)}assert.equal(camera.userData.shakeRemaining,0);assert.equal(camera.rotation.z,0);
+const camera=new T.PerspectiveCamera();camera.userData.wakeRemaining=WAKE_DURATION;let lastY=-Infinity;for(let i=0;i<82;i++){camera.position.set(0,1.7,0);camera.rotation.set(0,0,0);cameraFeedback(camera,.1,i*.1);assert(camera.position.y>=lastY-1e-8);lastY=camera.position.y}assert(Math.abs(camera.position.y-1.7)<1e-6);camera.userData.shakeRemaining=.3;for(let i=0;i<40;i++){camera.rotation.set(0,0,0);cameraFeedback(camera,.01,i*.01)}assert.equal(camera.userData.shakeRemaining,0);assert.equal(camera.rotation.z,0);
 console.log('PASS awakening ends at normal eye height, short camera shake, scalable healing/nonlethal flesh, class offhand rules, improved shield cost and Lich death checkpoint');
 
 const {chapterTwoWorld}=await import('../chapter-two-world.js');const {validateChapterTwo}=await import('../chapter-two-save.js');const {regionBoundary}=await import('../region-boundary.js');const {earlyWorld}=await import('../early-world.js');
@@ -30,3 +30,7 @@ console.log('PASS death source distinguishes Lich/summons from ordinary crypt sk
 world.enter('road');assert(world.mobs.filter(n=>n.group==='farm').length>=8);for(const n of world.mobs.filter(n=>n.id.startsWith('c2-farm-road-east')))assert(world.can(n.home.x,n.home.z,.35),'new camp spawn is clear: '+n.id);
 const {travelPose}=await import('../travel-routes.js');assert.deepEqual(travelPose('c2_manor','c2_inn').position,[2800,1.7,-173]);assert.equal(travelPose('c2_city','c2_manor'),undefined);
 console.log('PASS additional separated road population and correct return edge from manor to inn');
+
+const at=age=>awakeningPose(WAKE_DURATION-age);assert(at(3.7).yaw<-.6,'look right first');assert(at(5.3).yaw>.6,'then look left');assert(Math.abs(at(6.1).yaw)<1e-8);assert(at(6.9).pitch<-.6&&at(6.9).hands>.99,'look down at raised hands');assert(Object.values(at(WAKE_DURATION)).every(value=>value===0));
+const awakening=new T.PerspectiveCamera();awakening.userData.wakeRemaining=WAKE_DURATION;assert(!canLookAround(awakening));let previousPose=null,sawHands=false;for(let i=0;i<412;i++){awakening.position.set(0,1.7,0);awakening.rotation.set(0,0,0);cameraFeedback(awakening,.02,i*.02);if(previousPose){assert(Math.abs(awakening.rotation.y-previousPose.yaw)<.06);assert(Math.abs(awakening.rotation.x-previousPose.pitch)<.05)}previousPose={yaw:awakening.rotation.y,pitch:awakening.rotation.x};const hands=awakening.userData.wakeHands;if(hands?.visible){sawHands=true;assert.equal(hands.children.length,2);assert.equal(hands.parent,awakening)}}assert(sawHands);assert(canLookAround(awakening));assert(!awakening.userData.wakeHands.visible);assert.equal(awakening.rotation.x,0);assert.equal(awakening.rotation.y,0);
+console.log('PASS controlled awakening: mouse gate, smooth right/left/hands sequence, visible paired hands and clean return of control');
