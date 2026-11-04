@@ -12,7 +12,7 @@ export function bowShotDamageMultiplier(seconds){return (80+40*bowDrawPower(seco
 export function skillPoints(level,rank=0){return Math.max(0,Math.floor(Math.min(100,level)/2)-rank)}
 export function scaledDamage(base,level){return base*(1+.05*(level-1))}
 export function criticalDamage(amount,roll=Math.random(),chance=.1){return amount*(roll<chance?2:1)}
-export function blockHit(amount,type,v,guard,improved=false,{front=true,levelGap=0}={}){if(type==='hazard'||!front||!guard.held||guard.broken)return amount;const cost=(v.maxStamina||100)*.25,available=Math.max(0,v.stamina),enough=available>=cost;let reduction=levelGap>=3?(type==='magic'?(improved?.40:.33):(improved?.70:.6)):(type==='magic'?(improved?.70:.6):1);if(!enough)reduction=Math.min(reduction,available/100);v.stamina=Math.max(0,available-cost);if(v.stamina===0){guard.broken=true;v.staminaDelay=1.5}return amount*(1-reduction)}
+export function blockHit(amount,type,v,guard,improved=false,{front=true,levelGap=0}={}){if(type==='hazard'||!front||!guard.held||guard.broken)return amount;const cost=(v.maxStamina||100)*(improved?.20:.25),available=Math.max(0,v.stamina),enough=available>=cost;let reduction=levelGap>=3?(type==='magic'?(improved?.40:.33):(improved?.70:.6)):(type==='magic'?(improved?.70:.6):1);if(!enough)reduction=Math.min(reduction,available/100);v.stamina=Math.max(0,available-cost);if(v.stamina===0){guard.broken=true;v.staminaDelay=1.5}return amount*(1-reduction)}
 
 export function statusStep(n,dt){const stunned=Math.min(dt,n.stun||0);n.stun=Math.max(0,(n.stun||0)-dt);const available=dt-stunned,slowed=Math.min(available,Math.max(0,(n.slow||0)-stunned));n.slow=Math.max(0,(n.slow||0)-dt);return available-slowed*.5}
 

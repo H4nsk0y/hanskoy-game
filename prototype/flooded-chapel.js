@@ -21,7 +21,7 @@ export function floodedChapel({scene,camera,groundMap,stoneMap,waterMap,fireMap,
  function build(){if(built)return;built=true;
   if(backdropMaterial){const material=backdropMaterial.clone();material.onBeforeCompile=backdropMaterial.onBeforeCompile;material.transparent=true;const back=mesh(new T.CylinderGeometry(85,85,60,48,1,true),material,1000,22,-120);back.renderOrder=-1000}if(skyMap)mesh(new T.SphereGeometry(110,32,16),new T.MeshBasicMaterial({map:skyMap,side:T.BackSide,fog:false,depthWrite:false}),1000,0,-120);
   const floor=mesh(new T.PlaneGeometry(96,108),new T.MeshStandardMaterial({map:groundMap||null,color:0x42625a,roughness:1}),1000,-.06,-120);floor.rotation.x=-Math.PI/2;
-  regionBoundary(root,[950,-175,100,112],{kind:'forest',gaps:[[1000,-70]]});waygate(root,1000,-70,'chapel-exit-portal');
+  regionBoundary(root,[950,-175,100,112],{bare:true,kind:'forest',gaps:[[1000,-70]]});waygate(root,1000,-70,'chapel-exit-portal');
   water=mesh(new T.PlaneGeometry(88,85),new T.MeshStandardMaterial({map:waterMap||null,color:0x1e6175,transparent:true,opacity:.72,metalness:.35,roughness:.25,depthWrite:false}),1000,.005,-126);water.rotation.x=-Math.PI/2;
   for(const [x,z,w,d] of CHAPEL_DECKS)box(x,-.18,z,w,.5,d,new T.MeshStandardMaterial({map:stoneMap||null,color:0x7a8588}));
   for(const island of CHAPEL_ISLANDS){mesh(new T.CylinderGeometry(island.r,island.r+.35,.7,32),new T.MeshStandardMaterial({map:groundMap||null,color:0x788b67,roughness:1}),island.x,-.28,island.z);for(let k=0;k<10;k++){const a=k*Math.PI/5;mesh(new T.DodecahedronGeometry(.3+k%3*.05),stone,island.x+Math.sin(a)*(island.r-.3),.08,island.z+Math.cos(a)*(island.r-.3))}}

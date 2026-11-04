@@ -8,7 +8,7 @@ export function bossCombat({scene,camera,hunter,witch,free,rand,arenaBounds=null
   const shots=[],pools=[];let time=0,healUsed=false,healLeft=0,poolReady=0,laughReady=0,witchEngaged=false,clawWindup=0;
   const aura=new T.Mesh(new T.SphereGeometry(1.2,12,10),new T.MeshBasicMaterial({color:0x50ff65,transparent:true,opacity:.2,wireframe:true,depthWrite:false}));aura.position.y=1;witch.g.add(aura);aura.visible=false;
   const sight=n=>{const dx=camera.position.x-n.g.position.x,dz=camera.position.z-n.g.position.z,steps=Math.ceil(Math.hypot(dx,dz)/.4);for(let i=1;i<steps;i++)if(!free(n.g.position.x+dx*i/steps,n.g.position.z+dz*i/steps,.05))return false;return true};
-  function move(n,engaged,dt){if(dt<=0)return;
+  function move(n,engaged,dt){if(dt<=0)return;if(!free(n.g.position.x,n.g.position.z,.6)&&free(n.home.x,n.home.z,.6)){n.g.position.copy(n.home);n.target?.copy(n.home)}
     n.timer=(n.timer||0)-dt;
     const dx=camera.position.x-n.g.position.x,dz=camera.position.z-n.g.position.z,d=Math.hypot(dx,dz)||1;
     if(n.timer<=0||!n.target){n.timer=engaged?1.2+rand():2+rand()*2;const side=rand()<.5?-1:1;

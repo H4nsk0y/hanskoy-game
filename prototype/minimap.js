@@ -24,7 +24,7 @@ export function minimap({document,ctx,p,camera,bags,zone}){
    (data.islands||[]).map(i=>`<circle cx="${x(i.x)}" cy="${z(i.z)}" r="${i.r*scale}" fill="#566a54"/>`).join('')+
    (data.floors||[]).map(r=>rect(r,'#837c5b')).join('')+(data.buildings||[]).map(r=>rect(r,'#a18e73')).join('')+
    mapLinks(current,p).map(i=>dot(i.x,i.z,'#c2a2ef')).join('')+
-   (current==='c2_city'?raidEnemies(world):[]).map(n=>dot(n.g.position.x,n.g.position.z,'#ff4545',4)).join('')+
+   (current==='forest'&&ctx.earlyWorld?.raidActive?ctx.earlyWorld.mobs.filter(n=>n.id.startsWith('village-raid')):current==='c2_city'?raidEnemies(world):[]).map(n=>dot(n.g.position.x,n.g.position.z,'#ff4545',4)).join('')+
    deathMarkers(bags(),current).map(b=>`<path d="M0 -6L5 0L0 6L-5 0Z" fill="#ffd577" stroke="#fff2cb" transform="translate(${x(b.x)} ${z(b.z)})"/>`).join('')+
    (p.mapWaypoint?.zone===current?dot(p.mapWaypoint.x,p.mapWaypoint.z,'#65b4ff',4):'')+
    `<path d="M0 -7L5 5L0 3L-5 5Z" fill="#9af4ff" stroke="#e4fcff" transform="translate(${x(camera.position.x)} ${z(camera.position.z)}) rotate(${yaw})"/></svg>`;

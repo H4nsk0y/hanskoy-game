@@ -1,4 +1,6 @@
 // Recovery is a percentage of HP remaining, not of the missing or maximum HP.
 export const BOSS_RECOVERY={troll:.6,witch:.3,hunter:.2,lich:.4};
 export function recoverBosses(bosses){for(const n of bosses){if(!n||n.hp<=0||!n.g?.visible)continue;const rate=BOSS_RECOVERY[n.species];if(rate!==undefined&&(n.hit||n.aggro))n.hp=Math.min(n.maxHp,n.hp*(1+rate));n.hit=false;n.aggro=null;n.stun=n.slow=n.attackWindup=0;n.root=n.bleedLeft=n.markLeft=0;n.cooldown=1;if(n.home){n.g.position.copy(n.home);n.target?.copy(n.home)}}}
-export function respawnCheckpoint(p){if(p.checkpoint)return {...p.checkpoint,text:'Вы вернулись к выбранной контрольной точке.'};return p.rewards.includes('rabbit-quest')?{id:'village-fire',zone:'forest',position:[2.7,1.7,-101],text:'Вы очнулись у деревенского костра.'}:{id:'forest-start',zone:'forest',position:[0,1.7,8],text:'Вы снова очнулись на лесной тропе.'}}
+export function respawnCheckpoint(p){if(p.deathByLich)return {id:'crypt-entrance',zone:'dungeon',position:[480,1.7,-62],text:'Вы очнулись у входа в склеп.'};if(p.checkpoint)return {...p.checkpoint,text:'Вы вернулись к выбранной контрольной точке.'};return p.rewards.includes('rabbit-quest')?{id:'village-fire',zone:'forest',position:[2.7,1.7,-101],text:'Вы очнулись у деревенского костра.'}:{id:'forest-start',zone:'forest',position:[0,1.7,8],text:'Вы снова очнулись на лесной тропе.'}}
+
+export function killedByLich(source,attacker,zone){return source==='lich'||attacker?.species==='lich'||zone==='lich'&&(String(source).startsWith('summon-')||String(attacker?.id).startsWith('summon-'))}

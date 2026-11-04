@@ -1,8 +1,12 @@
 export function maximum(v,key){return (v[{hp:'maxHp',stamina:'maxStamina',mana:'maxMana'}[key]]||100)*(key==='hp'?(v.curseMultiplier??1):1)}
 export function upgradeStat(p,v,key){if(!['hp','stamina','mana'].includes(key)||!(p.pendingLevels>0))return false;const field={hp:'maxHp',stamina:'maxStamina',mana:'maxMana'}[key];v[field]=(v[field]||100)+10;for(const resource of ['hp','stamina','mana'])v[resource]=maximum(v,resource);p.pendingLevels--;return true}
 export function regenerate(v,dt,{campfire=false,torch=false,multiplier=1,manaMultiplier=1,healthMultiplier=1,offhandTorch=false,healthAllowed=true,zoneMultiplier=1}={}){const hpRate=(campfire?11.5:torch?4:.5)*multiplier*zoneMultiplier;if(healthAllowed)v.hp=Math.min(maximum(v,'hp'),v.hp+hpRate*healthMultiplier*dt);v.mana=Math.min(maximum(v,'mana'),v.mana+hpRate*2.16*manaMultiplier*(offhandTorch&&!campfire?.65:1)*dt)}
-export function drinkAle(v){v.hp=Math.min(maximum(v,'hp'),v.hp+45);v.stamina=maximum(v,'stamina');v.mana=Math.min(maximum(v,'mana'),v.mana+maximum(v,'mana')*.5)}
+export function drinkAle(v){v.hp=Math.min(maximum(v,'hp'),v.hp+Math.max(45,maximum(v,'hp')*.3));v.stamina=maximum(v,'stamina');v.mana=Math.min(maximum(v,'mana'),v.mana+maximum(v,'mana')*.5)}
 
 export const CLASS_BASES={sword:{hp:140,stamina:115,mana:100},bow:{hp:120,stamina:150,mana:100},mage:{hp:100,stamina:100,mana:150}};
 export function applyClassBase(p,v,gear={},force=false){const base=CLASS_BASES[p.classId];if(!base||!force&&p.classBalanceVersion===1)return false;for(const [key,field] of [['hp','maxHp'],['stamina','maxStamina'],['mana','maxMana']]){const delta=(base[key]-100)*(key==='hp'?(gear.hpMultiplier||1):1);v[field]=(v[field]||100)+delta;v[key]=key==='hp'&&v.hp<=0?0:Math.min(maximum(v,key),v[key]+delta)}p.classBalanceVersion=1;return true}
 export const HEALING_ITEMS=new Set(['mary_ale','health_potion','healing_herbs','hunter_stew','order_tonic','healing_draught','greater_healing','field_bandage']);
+
+export function healingAmount(base,v,fraction=.3){return Math.max(base,Math.round(maximum(v,'hp')*fraction))}
+
+export function eatRottenFlesh(v,rand=Math.random){const before=v.hp;v.hp=rand()<.55?Math.min(maximum(v,'hp'),v.hp+Math.max(10,maximum(v,'hp')*.15)):Math.max(1,v.hp-maximum(v,'hp')*.1);return v.hp-before}
