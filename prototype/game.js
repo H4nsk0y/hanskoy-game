@@ -1,3 +1,4 @@
+import {meleeCombat,meleeProfile,meleePose,startMelee,clearMelee} from './melee-ai.js';
 import {audioSettings as createAudioSettings} from './audio-settings.js';
 import {earlyWorld as createEarlyWorld} from './early-world.js';
 import {addItem} from './inventory.js';
@@ -189,7 +190,7 @@ if(wolf.mode==='attack'&&(inVillage||camera.position.distanceTo(wolf.aggroOrigin
 const mode=wolf.mode;if(mode!=='attack')wolf.attackWindup=0;threat.textContent='';
 wolf.cooldown=Math.max(0,wolf.cooldown-dt);
 const distance=Math.hypot(camera.position.x-wolf.g.position.x,camera.position.z-wolf.g.position.z);
-if(mode==='attack'){if(distance>1.75)move(wolf,camera.position,wolf.attackWindup?4.2:3.8,dt);biteAttack(wolf,dt,distance<2.2&&vitals.height<.9&&[.2,.4,.6,.8].every(t=>free(wolf.g.position.x+(camera.position.x-wolf.g.position.x)*t,wolf.g.position.z+(camera.position.z-wolf.g.position.z)*t,.05)),()=>campaign.onDamage(14,'physical','wolf',wolf.g.position),1.2,id=>effects.play(id));}else{if(!wolf.patrolTarget||wolf.g.position.distanceTo(wolf.patrolTarget)<.6){for(let i=0;i<20;i++){const a=rand()*Math.PI*2,r=rand()*7;const x=wolfHome.x+Math.cos(a)*r,z=wolfHome.z+Math.sin(a)*r;if(free(x,z)){wolf.patrolTarget=new T.Vector3(x,0,z);break}}}move(wolf,wolf.patrolTarget||wolfHome,1.25,dt)}
+if(mode!=='attack'){clearMelee(wolf);wolf.aggro=null}if(mode==='attack'){wolf.aggro??=camera.position.clone();meleeCombat(wolf,dt,{camera,free,onHit:(value,type)=>campaign.onDamage(value,type,'wolf',wolf.g.position),onSound:id=>effects.play(id),damage:14,speed:3.8,canHit:()=>vitals.height<.9,cooldown:1.2});}else{if(!wolf.patrolTarget||wolf.g.position.distanceTo(wolf.patrolTarget)<.6){for(let i=0;i<20;i++){const a=rand()*Math.PI*2,r=rand()*7;const x=wolfHome.x+Math.cos(a)*r,z=wolfHome.z+Math.sin(a)*r;if(free(x,z)){wolf.patrolTarget=new T.Vector3(x,0,z);break}}}move(wolf,wolf.patrolTarget||wolfHome,1.25,dt)}
 }
 
 
