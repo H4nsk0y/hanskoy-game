@@ -47,7 +47,7 @@ export function meleePose(n){const s=n?.melee,g=n?.g;if(!s||!g)return;const rig=
  rig.rotation.z=double?(s.chain?-.13:.13)*(wind?smooth(t):Math.sin(t*Math.PI)):wind?-.08*smooth(t):strike?.12*Math.sin(t*Math.PI):0;
  const legs=g.userData.meleeLegs||[];if(legs.length===2){const plant=wind?smooth(t):strike?1-smooth(t):s.phase==='between'?.6:1-smooth(t);legs[0].rotation.x=-.3*plant;legs[1].rotation.x=.2*plant}
  const weapon=g.userData.meleeWeapon;if(weapon&&arms[1])weapon.rotation.x=-arms[1].rotation.x+(wind?-.25:strike?2*smooth(t):s.phase==='between'?.25:0);
- if(head)head.rotation.x=wind?-.18*smooth(t):strike?.35*Math.sin(t*Math.PI):0;if(jaw)jaw.rotation.x=wind?.35*smooth(t):strike?.65*Math.sin(t*Math.PI):0;
+ if(head)head.rotation.x=wind?(dash?.22:-.24)*smooth(t):strike?.35*Math.sin(t*Math.PI):0;if(jaw)jaw.rotation.x=wind?.35*smooth(t):strike?.65*Math.sin(t*Math.PI):0;
  if(!g.userData.meleeTell){const tell=new T.Mesh(new T.RingGeometry(.55,.61,24),new T.MeshBasicMaterial({color:0xf5b34f,side:T.DoubleSide,transparent:true,opacity:.65,depthWrite:false}));tell.rotation.x=-Math.PI/2;tell.position.y=.06;g.add(tell);g.userData.meleeTell=tell}
  const tell=g.userData.meleeTell;tell.visible=wind&&(dash||double);tell.material.color.setHex(dash?0xf2b759:0xff775e);tell.scale.setScalar(1+.25*smooth(t));
 }
