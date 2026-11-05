@@ -10,6 +10,7 @@ export const BOW_DRAW_SECONDS=1.5;
 export function bowDrawPower(seconds){return Math.min(1,Math.max(0,seconds/BOW_DRAW_SECONDS))}
 export function bowShotSpeed(seconds){return 30*(.6+.8*bowDrawPower(seconds))}
 export function bowShotDamageMultiplier(seconds){return (80+40*bowDrawPower(seconds))/100}
+export function bowShotDamage(base,seconds){return seconds<.5?Math.min(5,base):base*bowShotDamageMultiplier(seconds)}
 export function skillPoints(level,rank=0){return Math.max(0,Math.floor(Math.min(100,level)/2)-rank)}
 export function scaledDamage(base,level){return base*(1+.05*(level-1))}
 export function criticalDamage(amount,roll=Math.random(),chance=.1){return amount*(roll<chance?2:1)}

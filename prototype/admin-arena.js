@@ -12,7 +12,7 @@ export function adminArena({scene,camera,vitals,fireMap,stoneMap,rand=Math.rando
  function build(){if(built)return;built=true;root=new T.Group();scene.add(root);
   arena=lichDungeon({scene:root,camera,vitals,fireMap,stoneMap,rand,setPose});arena.enter('lich');baseline=arena.snapshot();arena.boss.g.visible=false;
   function actor(id,x,z,hp){const n=modelActor(root,[],x,z,1.85,false,id);Object.assign(n,{id:'admin-'+id,species:id,name:id==='hunter'?'Охотник — испытание':'Ведьма — испытание',hp,maxHp:hp,home:new T.Vector3(x,0,z),target:new T.Vector3(x,0,z),cooldown:1,heading:0,hit:false});n.g.visible=false;return n}
-  hunter=actor('hunter',700,-130,120);witch=actor('witch',700,-130,330);const hat=new T.Mesh(new T.ConeGeometry(.4,.65,7),witchMaterial('шляпа'));hat.position.y=1.95;witch.g.add(hat);
+  hunter=actor('hunter',700,-130,180);witch=actor('witch',700,-130,330);const hat=new T.Mesh(new T.ConeGeometry(.4,.65,7),witchMaterial('шляпа'));hat.position.y=1.95;witch.g.add(hat);
   combat=bossCombat({scene:root,camera,hunter,witch,free:(x,z,r)=>arena.can(x,z,r),rand,arenaBounds:[676,724,-148,-93]});
   const ogre=trollEncounter({scene:root,camera,rand,free:()=>true});ogre.spawnAt(700,-113);dummy=ogre.n;dummy.id='admin-target';dummy.name='Огр — бессмертная мишень';dummy.g.rotation.y=0;dummy.hit=false;
   const mat=new T.MeshStandardMaterial({map:stoneMap||null,color:0x677278});
